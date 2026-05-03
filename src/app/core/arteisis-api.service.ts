@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface OrderApiRow {
@@ -160,5 +160,9 @@ export class ArteIsisApiService {
 
   getMe(): Observable<AuthMeResponse> {
     return this.http.get<AuthMeResponse>(`${this.base}/api/auth/me`);
+  }
+
+  submitContact(body: { name: string; email: string; subject: string; message: string }): Observable<void> {
+    return this.http.post(`${this.base}/api/public/contact`, body, { responseType: 'text' }).pipe(map(() => undefined));
   }
 }

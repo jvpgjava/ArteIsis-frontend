@@ -1,10 +1,16 @@
-import { inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID, inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { readStoredAccessToken } from './auth.interceptor';
-import { readRoleFromAccessToken } from './auth.storage';
+import { readAuthRole, readRoleFromAccessToken } from './auth.storage';
 import { AuthService } from './auth.service';
 
 export const adminGuard: CanActivateFn = (_route, state) => {
+  const platformId = inject(PLATFORM_ID);
+  if (!isPlatformBrowser(platformId)) {
+    return true;
+  }
+
   const auth = inject(AuthService);
   const router = inject(Router);
 
@@ -12,7 +18,7 @@ export const adminGuard: CanActivateFn = (_route, state) => {
     router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
-  const role = auth.storedRole() ?? readRoleFromAccessToken(readStoredAccessToken());
+  const role = readAuthRole() ?? readRoleFromAccessToken(readStoredAccessToken());
   if (role !== 'ADMIN') {
     router.navigate(['/']);
     return false;

@@ -16,17 +16,13 @@ import { AuthService } from '../../core/auth.service';
           <p class="text-isis-dark/50">Acesse sua conta para gerenciar seus pedidos.</p>
         </div>
 
-        <form class="space-y-6" (ngSubmit)="submit()">
+        <form class="flex flex-col gap-8" (ngSubmit)="submit()">
           <app-input label="E-mail" type="email" placeholder="seu@email.com" [(value)]="email" />
           <app-input label="Senha" type="password" placeholder="••••••••" [(value)]="password" />
 
           @if (error()) {
             <p class="text-xs font-bold text-red-600 uppercase tracking-wider">{{ error() }}</p>
           }
-
-          <div class="flex justify-end">
-            <span class="text-xs font-bold text-isis-dark/30 uppercase tracking-wider">Recuperação de senha em breve</span>
-          </div>
 
           <app-button
             type="submit"

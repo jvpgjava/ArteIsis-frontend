@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
 @Component({
   selector: 'app-input',
   template: `
-    <div class="flex flex-col gap-1.5 w-full">
+    <div class="flex flex-col gap-2.5 w-full">
       @if (label()) {
         <label [for]="id()" class="text-xs font-bold uppercase tracking-wider text-isis-dark/50 px-1">
           {{ label() }}

@@ -1,11 +1,8 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { ACCESS_TOKEN_KEY } from './auth.storage';
+import { readAuthToken } from './auth.storage';
 
 export function readStoredAccessToken(): string | null {
-  if (typeof sessionStorage === 'undefined') {
-    return null;
-  }
-  return sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  return readAuthToken();
 }
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -13,7 +10,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (url.includes('/api/auth/login') || url.includes('/api/auth/register')) {
     return next(req);
   }
-  const token = readStoredAccessToken();
+  const token = readAuthToken();
   if (!token) {
     return next(req);
   }

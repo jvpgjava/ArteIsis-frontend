@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 
 @Component({
   selector: 'app-textarea',
@@ -13,6 +13,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         [id]="id()"
         [rows]="rows()"
         [placeholder]="placeholder()"
+        [value]="value()"
+        (input)="onInput($event)"
         class="bg-isis-light border border-isis-blue/10 p-4 rounded-xl focus:outline-none focus:border-isis-blue/40 transition-colors w-full text-isis-dark resize-none"
       ></textarea>
     </div>
@@ -24,4 +26,10 @@ export class Textarea {
   label = input<string>('');
   rows = input<number>(4);
   placeholder = input<string>('');
+  value = model<string>('');
+
+  onInput(event: Event) {
+    const el = event.target as HTMLTextAreaElement | null;
+    this.value.set(el?.value ?? '');
+  }
 }
