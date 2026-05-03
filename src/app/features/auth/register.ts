@@ -3,12 +3,17 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Checkbox } from '../../components/ui/checkbox';
 import { AuthService } from '../../core/auth.service';
+import {
+  isValidBrazilPhoneDigits,
+  isValidEmail,
+  normalizeEmail,
+  stripPhoneDigits,
+} from '../../core/form-validators';
 
 @Component({
   selector: 'app-register',
-  imports: [RouterLink, Button, Input, Checkbox, FormsModule],
+  imports: [RouterLink, Button, Input, FormsModule],
   template: `
     <div class="min-h-[90vh] flex items-center justify-center px-4 py-20 bg-isis-light/30">
       <div class="w-full max-w-2xl bg-white p-10 rounded-3xl shadow-xl border border-isis-blue/5">
@@ -17,22 +22,48 @@ import { AuthService } from '../../core/auth.service';
           <p class="text-isis-dark/50 italic">Junte-se à Arte Isis e transforme suas ideias em arte.</p>
         </div>
 
-        <form class="grid grid-cols-1 md:grid-cols-2 gap-6" (ngSubmit)="submit()">
-          <app-input label="Nome Completo" placeholder="Nome" [(value)]="fullName" />
-          <app-input label="Telefone" placeholder="(11) 99999-9999" [(value)]="phone" />
+        <form class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8" (ngSubmit)="submit()">
+          <app-input
+            label="Nome Completo"
+            placeholder="Nome"
+            [(value)]="fullName"
+            [errorText]="errName()"
+          />
+          <app-input
+            label="Telefone"
+            placeholder="(11) 99999-9999"
+            mask="phone-br"
+            [(value)]="phone"
+            [errorText]="errPhone()"
+          />
           <div class="md:col-span-2">
-            <app-input label="E-mail" type="email" placeholder="seu@email.com" [(value)]="email" />
+            <app-input
+              label="E-mail"
+              type="email"
+              placeholder="seu@email.com"
+              mask="email"
+              [(value)]="email"
+              [errorText]="errEmail()"
+            />
           </div>
-          <app-input label="Senha" type="password" placeholder="Mínimo 8 caracteres" [(value)]="password" />
-          <app-input label="Confirmar Senha" type="password" placeholder="••••••••" [(value)]="passwordConfirm" />
+          <app-input
+            label="Senha"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            [(value)]="password"
+            [errorText]="errPassword()"
+          />
+          <app-input
+            label="Confirmar Senha"
+            type="password"
+            placeholder="••••••••"
+            [(value)]="passwordConfirm"
+            [errorText]="errPasswordConfirm()"
+          />
 
           @if (error()) {
             <p class="md:col-span-2 text-xs font-bold text-red-600 uppercase tracking-wider">{{ error() }}</p>
           }
-
-          <div class="md:col-span-2 py-2">
-            <app-checkbox label="Eu aceito os termos de uso e política de privacidade." [(value)]="termsAccepted" />
-          </div>
 
           <div class="md:col-span-2">
             <app-button type="submit" class="w-full mt-4" variant="primary" [disabled]="loading()">
@@ -59,36 +90,56 @@ export class Register {
   email = model('');
   password = model('');
   passwordConfirm = model('');
-  termsAccepted = model(false);
+
+  errName = signal('');
+  errPhone = signal('');
+  errEmail = signal('');
+  errPassword = signal('');
+  errPasswordConfirm = signal('');
 
   error = signal<string | null>(null);
   loading = signal(false);
 
   submit() {
+    this.clearFieldErrors();
     this.error.set(null);
-    if (!this.termsAccepted()) {
-      this.error.set('Aceite os termos para continuar.');
-      return;
-    }
     const name = String(this.fullName() ?? '').trim();
-    const mail = String(this.email() ?? '').trim();
+    const mail = normalizeEmail(String(this.email() ?? ''));
+    const phoneDigits = stripPhoneDigits(String(this.phone() ?? ''));
     const p1 = String(this.password() ?? '');
     const p2 = String(this.passwordConfirm() ?? '');
-    if (!name || !mail || !p1) {
-      this.error.set('Preencha nome, e-mail e senha.');
-      return;
+
+    let ok = true;
+    if (name.length < 3) {
+      this.errName.set('Informe o nome completo (mín. 3 caracteres).');
+      ok = false;
+    }
+    if (!isValidBrazilPhoneDigits(phoneDigits)) {
+      this.errPhone.set('Telefone inválido. Use DDD + número (10 ou 11 dígitos).');
+      ok = false;
+    }
+    if (!isValidEmail(mail)) {
+      this.errEmail.set('E-mail inválido.');
+      ok = false;
     }
     if (p1.length < 8) {
-      this.error.set('A senha deve ter pelo menos 8 caracteres.');
-      return;
+      this.errPassword.set('A senha deve ter pelo menos 8 caracteres.');
+      ok = false;
     }
     if (p1 !== p2) {
-      this.error.set('As senhas não coincidem.');
+      this.errPasswordConfirm.set('As senhas não coincidem.');
+      ok = false;
+    }
+    if (!ok) {
       return;
     }
+
     this.loading.set(true);
-    this.auth.register(mail, p1, name).subscribe({
-      next: () => void this.router.navigateByUrl('/'),
+    this.auth.register(mail, p1, name, phoneDigits).subscribe({
+      next: () => {
+        this.loading.set(false);
+        void this.router.navigateByUrl('/');
+      },
       error: (err) => {
         const msg =
           err?.status === 409
@@ -99,5 +150,13 @@ export class Register {
       },
       complete: () => this.loading.set(false),
     });
+  }
+
+  private clearFieldErrors() {
+    this.errName.set('');
+    this.errPhone.set('');
+    this.errEmail.set('');
+    this.errPassword.set('');
+    this.errPasswordConfirm.set('');
   }
 }

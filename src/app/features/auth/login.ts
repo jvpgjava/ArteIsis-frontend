@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { AuthService } from '../../core/auth.service';
+import { isValidEmail, normalizeEmail } from '../../core/form-validators';
 
 @Component({
   selector: 'app-login',
@@ -17,8 +18,15 @@ import { AuthService } from '../../core/auth.service';
         </div>
 
         <form class="flex flex-col gap-8" (ngSubmit)="submit()">
-          <app-input label="E-mail" type="email" placeholder="seu@email.com" [(value)]="email" />
-          <app-input label="Senha" type="password" placeholder="••••••••" [(value)]="password" />
+          <app-input
+            label="E-mail"
+            type="email"
+            placeholder="seu@email.com"
+            mask="email"
+            [(value)]="email"
+            [errorText]="errEmail()"
+          />
+          <app-input label="Senha" type="password" placeholder="••••••••" [(value)]="password" [errorText]="errPassword()" />
 
           @if (error()) {
             <p class="text-xs font-bold text-red-600 uppercase tracking-wider">{{ error() }}</p>
@@ -51,20 +59,33 @@ export class Login {
 
   email = model('');
   password = model('');
+  errEmail = signal('');
+  errPassword = signal('');
   error = signal<string | null>(null);
   loading = signal(false);
 
   submit() {
+    this.errEmail.set('');
+    this.errPassword.set('');
     this.error.set(null);
-    const e = String(this.email() ?? '').trim();
+    const mail = normalizeEmail(String(this.email() ?? ''));
     const p = String(this.password() ?? '');
-    if (!e || !p) {
-      this.error.set('Preencha e-mail e senha.');
+    let ok = true;
+    if (!isValidEmail(mail)) {
+      this.errEmail.set('E-mail inválido.');
+      ok = false;
+    }
+    if (!p) {
+      this.errPassword.set('Informe a senha.');
+      ok = false;
+    }
+    if (!ok) {
       return;
     }
     this.loading.set(true);
-    this.auth.login(e, p).subscribe({
+    this.auth.login(mail, p).subscribe({
       next: () => {
+        this.loading.set(false);
         const role = this.auth.storedRole();
         const raw = this.route.snapshot.queryParamMap.get('returnUrl');
         let target = raw ?? (role === 'ADMIN' ? '/admin' : '/');

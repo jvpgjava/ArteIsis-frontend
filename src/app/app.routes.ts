@@ -3,6 +3,7 @@ import {Home} from './features/home/home';
 import {Login} from './features/auth/login';
 import {Register} from './features/auth/register';
 import {ProductList} from './features/products/product-list';
+import {ProductDetail} from './features/products/product-detail';
 import {Dashboard} from './features/admin/dashboard';
 import {adminGuard} from './core/admin.guard';
 
@@ -22,6 +23,10 @@ export const routes: Routes = [
   {
     path: 'products',
     component: ProductList,
+  },
+  {
+    path: 'products/:id',
+    component: ProductDetail,
   },
   {
     path: 'admin',

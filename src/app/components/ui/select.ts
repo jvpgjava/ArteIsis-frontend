@@ -33,7 +33,7 @@ export interface SelectOption {
           type="button"
           [id]="id()"
           (click)="toggle()"
-          class="flex items-center justify-between bg-isis-light border border-isis-blue/10 p-4 rounded-xl focus:outline-none focus:border-isis-blue/40 transition-all w-full text-isis-dark text-left cursor-pointer hover:bg-white active:scale-[0.99] group shadow-sm hover:shadow-md"
+          class="group flex w-full cursor-pointer items-center justify-between rounded-xl border border-isis-blue/15 bg-white p-4 text-left text-isis-dark shadow-sm transition-all hover:border-isis-blue/25 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-isis-blue/20 active:scale-[0.99]"
         >
           <span class="truncate pr-4" [class.opacity-40]="!selectedLabel()">
             {{ selectedLabel() || placeholder() }}
@@ -48,14 +48,14 @@ export interface SelectOption {
 
         @if (isOpen()) {
           <div
-            class="absolute z-[110] w-full mt-2 bg-white border border-isis-blue/5 rounded-2xl shadow-2xl overflow-hidden py-2 animate-scale-in origin-top ring-1 ring-black/5"
+            class="app-select-panel absolute z-[1350] mt-2 w-full origin-top overflow-hidden rounded-xl border border-isis-blue/15 bg-white py-0 shadow-[0_12px_40px_-8px_rgba(42,42,42,0.22)] animate-scale-in divide-y divide-isis-blue/10"
           >
             @for (option of options(); track $index) {
               <button
                 type="button"
                 (click)="pick(option)"
-                class="w-full flex items-center justify-between px-5 py-3.5 text-sm text-isis-dark hover:bg-isis-light transition-all text-left group/item"
-                [class.bg-isis-light/40]="isSelected(option)"
+                class="app-select-option group/item flex w-full items-center justify-between border-0 bg-white px-4 py-3 text-left text-sm font-semibold text-isis-dark shadow-none transition-colors hover:bg-isis-light/90"
+                [class.bg-isis-light]="isSelected(option)"
               >
                 <span
                   class="transition-transform group-hover/item:translate-x-1"
@@ -68,7 +68,7 @@ export interface SelectOption {
                 }
               </button>
             } @empty {
-              <div class="px-5 py-3 text-xs text-isis-dark/30 italic">Nenhuma opção disponível</div>
+              <div class="bg-white px-4 py-3 text-xs italic text-isis-dark/40">Nenhuma opção disponível</div>
             }
           </div>
         }
@@ -77,6 +77,18 @@ export interface SelectOption {
   `,
   styles: [
     `
+      .app-select-panel {
+        background-color: #ffffff !important;
+        opacity: 1;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+      .app-select-option {
+        background-color: #ffffff !important;
+      }
+      .app-select-option.bg-isis-light {
+        background-color: #f1f5f9 !important;
+      }
       .animate-scale-in {
         animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }

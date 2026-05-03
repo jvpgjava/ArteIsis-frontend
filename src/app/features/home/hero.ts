@@ -1,16 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Button } from '../../components/ui/button';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-hero',
-  imports: [Button, RouterLink],
+  standalone: true,
   template: `
     <section class="relative min-h-[85vh] w-full overflow-hidden flex items-center justify-center py-20 px-4">
       <div class="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1621600411688-4be93cd68504?auto=format&fit=crop&q=80&w=2070" 
-          alt="Serigrafia Arte Isis" 
+        <img
+          src="https://images.unsplash.com/photo-1621600411688-4be93cd68504?auto=format&fit=crop&q=80&w=2070"
+          alt="Serigrafia Arte Isis"
           class="w-full h-full object-cover opacity-30 grayscale"
           referrerpolicy="no-referrer"
         />
@@ -23,43 +21,30 @@ import { RouterLink } from '@angular/router';
           <span class="italic underline decoration-isis-rose underline-offset-8">ideia transformada</span> <br>
           em arte!
         </h1>
-        <p class="text-white text-lg md:text-2xl font-light mb-12 max-w-2xl mx-auto opacity-90 leading-relaxed font-sans">
-          Trabalhamos com serigrafia de alta qualidade para uniformes, moletons e coleções exclusivas. Transformamos seu conceito em realidade.
+        <p class="text-white text-lg md:text-2xl font-light max-w-2xl mx-auto opacity-90 leading-relaxed font-sans pb-8">
+          Trabalhamos com serigrafia de alta qualidade para uniformes, moletons e coleções exclusivas. Transformamos seu conceito em
+          realidade.
         </p>
-        <div class="flex flex-wrap items-center justify-center gap-6">
-          <app-button variant="secondary" size="lg" (click)="scrollToContact()">Solicitar Orçamento</app-button>
-          <app-button variant="outline-white" size="lg" routerLink="/products">
-            Ver Produtos
-          </app-button>
-        </div>
-      </div>
-      <div class="absolute bottom-10 left-12 hidden md:block animate-pulse">
-        <div class="flex flex-col items-center gap-2">
-            <span class="text-white text-[10px] uppercase tracking-[0.3em] vertical-text">Explore</span>
-            <div class="w-[1px] h-12 bg-white/50"></div>
-        </div>
       </div>
     </section>
   `,
-  styles: [`
-    .animate-fade-in-up {
-      animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .vertical-text {
-        writing-mode: vertical-rl;
-    }
-  `],
+  styles: [
+    `
+      .animate-fade-in-up {
+        animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Hero {
-  scrollToContact() {
-    const contact = document.getElementById('contato');
-    if (contact) {
-      contact.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-}
+export class Hero {}

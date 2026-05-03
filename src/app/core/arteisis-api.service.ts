@@ -61,6 +61,22 @@ export interface TokenResponse {
 export interface AuthMeResponse {
   email: string;
   role: string;
+  phone?: string | null;
+}
+
+export interface PortfolioItemApiRow {
+  id: string;
+  title: string;
+  imageUrl: string;
+  sortOrder: number;
+}
+
+export interface PortfolioItemAdminApiRow extends PortfolioItemApiRow {
+  active: boolean;
+}
+
+export interface ImageUploadResponse {
+  url: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -88,6 +104,10 @@ export class ArteIsisApiService {
     return this.http.put<OrderApiRow>(`${this.base}/api/admin/orders/${id}`, body);
   }
 
+  deleteOrder(id: string): Observable<void> {
+    return this.http.delete(`${this.base}/api/admin/orders/${id}`).pipe(map(() => undefined));
+  }
+
   listCustomers(q?: string): Observable<CustomerApiRow[]> {
     const params = q ? new HttpParams().set('q', q) : undefined;
     return this.http.get<CustomerApiRow[]>(`${this.base}/api/admin/customers`, { params });
@@ -103,6 +123,10 @@ export class ArteIsisApiService {
 
   updateCustomer(id: string, body: { name: string; email: string; phone: string }): Observable<CustomerApiRow> {
     return this.http.put<CustomerApiRow>(`${this.base}/api/admin/customers/${id}`, body);
+  }
+
+  deleteCustomer(id: string): Observable<void> {
+    return this.http.delete(`${this.base}/api/admin/customers/${id}`).pipe(map(() => undefined));
   }
 
   listProductsAdmin(q?: string): Observable<ProductAdminApiRow[]> {
@@ -141,6 +165,39 @@ export class ArteIsisApiService {
     return this.http.put<ProductAdminApiRow>(`${this.base}/api/admin/products/${id}`, body);
   }
 
+  deleteProduct(id: string): Observable<void> {
+    return this.http.delete(`${this.base}/api/admin/products/${id}`).pipe(map(() => undefined));
+  }
+
+  listPublicPortfolio(): Observable<PortfolioItemApiRow[]> {
+    return this.http.get<PortfolioItemApiRow[]>(`${this.base}/api/catalog/portfolio`);
+  }
+
+  listPortfolioAdmin(): Observable<PortfolioItemAdminApiRow[]> {
+    return this.http.get<PortfolioItemAdminApiRow[]>(`${this.base}/api/admin/portfolio-items`);
+  }
+
+  createPortfolioItem(body: { title: string; imageUrl: string; active: boolean }): Observable<PortfolioItemAdminApiRow> {
+    return this.http.post<PortfolioItemAdminApiRow>(`${this.base}/api/admin/portfolio-items`, body);
+  }
+
+  updatePortfolioItem(
+    id: string,
+    body: { title: string; imageUrl: string; active: boolean },
+  ): Observable<PortfolioItemAdminApiRow> {
+    return this.http.put<PortfolioItemAdminApiRow>(`${this.base}/api/admin/portfolio-items/${id}`, body);
+  }
+
+  uploadImage(file: File): Observable<ImageUploadResponse> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<ImageUploadResponse>(`${this.base}/api/admin/upload/image`, fd);
+  }
+
+  deletePortfolioItem(id: string): Observable<void> {
+    return this.http.delete(`${this.base}/api/admin/portfolio-items/${id}`).pipe(map(() => undefined));
+  }
+
   listCatalog(filters: { q?: string; categories?: string[]; sizes?: string[]; availability?: string }): Observable<CatalogProductApiRow[]> {
     let p = new HttpParams();
     if (filters.q) p = p.set('q', filters.q);
@@ -150,11 +207,20 @@ export class ArteIsisApiService {
     return this.http.get<CatalogProductApiRow[]>(`${this.base}/api/catalog/products`, { params: p });
   }
 
+  getCatalogProduct(id: string): Observable<CatalogProductApiRow> {
+    return this.http.get<CatalogProductApiRow>(`${this.base}/api/catalog/products/${encodeURIComponent(id)}`);
+  }
+
   login(body: { email: string; password: string }): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${this.base}/api/auth/login`, body);
   }
 
-  register(body: { email: string; password: string; fullName?: string | null }): Observable<TokenResponse> {
+  register(body: {
+    email: string;
+    password: string;
+    fullName?: string | null;
+    phone?: string | null;
+  }): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${this.base}/api/auth/register`, body);
   }
 

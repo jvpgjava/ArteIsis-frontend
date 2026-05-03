@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { combineLatest, debounceTime, switchMap } from 'rxjs';
@@ -17,7 +17,7 @@ import { ProductCard, Product, mapCatalogRowToProduct } from '../home/featured-p
 import { ArteIsisApiService } from '../../core/arteisis-api.service';
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', '2X'] as const;
-const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Uniformes', 'Infantil'] as const;
+const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Uniformes', 'Escolar', 'Estampas', 'Infantil', 'Acessórios'] as const;
 
 @Component({
   selector: 'app-product-list',
@@ -169,6 +169,7 @@ const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Uniformes', 'Infantil'] as c
 export class ProductList {
   private readonly api = inject(ArteIsisApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
 
   readonly sizeOptions = SIZE_OPTIONS;
   readonly categoryOptions = CATEGORY_OPTIONS;
@@ -182,6 +183,11 @@ export class ProductList {
   products = signal<Product[]>([]);
 
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const c = params.get('categoria')?.trim();
+      this.selectedCategories.set(c ? [c] : []);
+    });
+
     afterNextRender(() => {
       combineLatest([
         toObservable(this.searchQuery).pipe(debounceTime(300)),

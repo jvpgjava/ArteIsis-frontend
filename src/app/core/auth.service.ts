@@ -71,9 +71,16 @@ export class AuthService {
     );
   }
 
-  register(email: string, password: string, fullName: string): Observable<void> {
+  register(email: string, password: string, fullName: string, phoneDigits: string | null): Observable<void> {
     const name = fullName.trim() || null;
-    return this.api.register({ email, password, fullName: name }).pipe(
+    return this.api
+      .register({
+        email,
+        password,
+        fullName: name,
+        phone: phoneDigits && phoneDigits.length > 0 ? phoneDigits : null,
+      })
+      .pipe(
       tap((res) => {
         writeAuthToken(res.accessToken);
       }),
