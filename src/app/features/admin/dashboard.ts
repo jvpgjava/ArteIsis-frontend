@@ -30,6 +30,7 @@ import {
   stripPhoneDigits,
 } from '../../core/form-validators';
 import { resolvePublicMediaUrl } from '../../core/media-url';
+import { UiDialogService } from '../../core/ui-dialog.service';
 
 interface Order {
   id: string;
@@ -59,7 +60,12 @@ interface Product {
   availability?: string | null;
   imageUrl?: string | null;
   sizes?: string[];
+  availableSizes?: string[];
+  colorVariants?: { hex: string; imageUrl: string; available: boolean }[];
 }
+
+const BR_DISPLAY_SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG'] as const;
+const GARMENT_CATEGORIES_FOR_SIZES = new Set(['Camisetas', 'Moletons', 'Uniformes', 'Infantil']);
 
 interface PortfolioRow {
   id: string;
@@ -103,9 +109,147 @@ const AVAILABILITY_OPTIONS: SelectOption[] = [
   { label: 'Sob encomenda', value: 'Sob encomenda' },
 ];
 
+const MAX_IMAGE_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+function adminHttpErrorMessage(e: unknown, fallback: string): string {
+  if (!(e instanceof HttpErrorResponse) || e.error == null) {
+    return fallback;
+  }
+  const body = e.error;
+  if (typeof body === 'string') {
+    const t = body.trim();
+    if (!t) return fallback;
+    try {
+      const j = JSON.parse(t) as { message?: unknown };
+      if (typeof j?.message === 'string' && j.message.trim()) {
+        return j.message.trim();
+      }
+    } catch {
+      return t;
+    }
+    return fallback;
+  }
+  if (typeof body === 'object' && 'message' in body) {
+    const msg = (body as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg.trim()) {
+      return msg.trim();
+    }
+  }
+  return fallback;
+}
+
+function validateImageFileForUpload(file: File): string | null {
+  if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+    return 'O arquivo é muito grande (máximo de 25 MB).';
+  }
+  return null;
+}
+
+/**
+ * Estoque > 0: em vestuário, cada combinação (tamanho × cor disponível) recebe a mesma quantidade;
+ * o estoque precisa ser múltiplo de (nº de tamanhos × nº de cores). Sem linhas de cor, valida-se só tamanhos ≤ estoque.
+ * Fora de vestuário: uma cor disponível por unidade de estoque.
+ */
+function validateProductStockCoherence(params: {
+  stock: number;
+  garment: boolean;
+  availableSizeCount: number;
+  colorRows: { available: boolean }[];
+}): string | null {
+  const { stock, garment, availableSizeCount: S, colorRows } = params;
+  if (stock <= 0) {
+    return null;
+  }
+  const nRows = colorRows.length;
+  const C = colorRows.filter((c) => c.available).length;
+
+  if (garment) {
+    if (S < 1) {
+      return 'Para vestuário, escolha pelo menos um tamanho disponível.';
+    }
+    if (S > stock) {
+      return `Há ${S} tamanhos disponíveis, mas o estoque é só ${stock}. Cada tamanho precisa de pelo menos uma unidade — reduza a quantidade de tamanhos ou aumente o estoque.`;
+    }
+    if (nRows === 0) {
+      return null;
+    }
+    if (C < 1) {
+      return 'Com linhas de cor, marque pelo menos uma como disponível ou remova todas as cores.';
+    }
+    if (C > stock) {
+      return `Há ${C} cores disponíveis, mas o estoque é só ${stock}.`;
+    }
+    const slots = S * C;
+    if (slots > stock) {
+      return `${S} tamanhos × ${C} cores = ${slots} combinações, acima do estoque (${stock}). Reduza tamanhos ou cores disponíveis, ou aumente o estoque.`;
+    }
+    if (stock % slots !== 0) {
+      return `O estoque (${stock}) precisa ser múltiplo de ${slots} (tamanhos × cores), para repartir igualmente cada combinação. Exemplo: estoque 4, com 2 tamanhos e 1 cor = 2 unidades por tamanho.`;
+    }
+    return null;
+  }
+
+  if (nRows === 0) {
+    return 'Para esta categoria, adicione opções de cor e marque tantas como disponíveis quanto o estoque.';
+  }
+  if (C !== stock) {
+    return `O estoque é ${stock} unidade(s): marque exatamente ${stock} cor(es) como disponível(is), ou ajuste o estoque.`;
+  }
+  return null;
+}
+
 function parseApiLocalDate(value: string | unknown): Date {
   const s = typeof value === 'string' ? value.slice(0, 10) : String(value).slice(0, 10);
   return new Date(`${s}T12:00:00`);
+}
+
+function coerceMoneyFromApi(v: unknown): number {
+  if (v == null) {
+    return NaN;
+  }
+  if (typeof v === 'number') {
+    return Number.isFinite(v) ? v : NaN;
+  }
+  if (typeof v === 'bigint') {
+    return Number(v);
+  }
+  const raw = String(v).trim().replace(/\s/g, '');
+  if (!raw) {
+    return NaN;
+  }
+  let n = Number(raw);
+  if (Number.isFinite(n)) {
+    return n;
+  }
+  n = Number(raw.replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/** Lê o total do pedido a partir da resposta HTTP (chaves/formatos tolerantes). */
+function parseOrderTotalFromApiRow(row: OrderApiRow): number {
+  const r = row as unknown as Record<string, unknown>;
+  const tryVal = (v: unknown): number | null => {
+    if (v === undefined || v === null) {
+      return null;
+    }
+    const n = coerceMoneyFromApi(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  for (const key of ['total', 'totalAmount', 'valor']) {
+    const n = tryVal(r[key]);
+    if (n !== null) {
+      return n;
+    }
+  }
+  for (const [k, v] of Object.entries(r)) {
+    if (/total|valor|amount/i.test(k)) {
+      const n = tryVal(v);
+      if (n !== null) {
+        return n;
+      }
+    }
+  }
+  return 0;
 }
 
 function mapOrder(r: OrderApiRow): Order {
@@ -116,7 +260,7 @@ function mapOrder(r: OrderApiRow): Order {
     product: r.productSummary,
     date: parseApiLocalDate(r.date as unknown),
     status: r.status as Order['status'],
-    total: Number(r.total),
+    total: parseOrderTotalFromApiRow(r),
   };
 }
 
@@ -263,41 +407,51 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Produto</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Data</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Status</th>
-                      <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-isis-dark/55">Valor</th>
-                      <th class="px-6 py-4 w-24 min-w-[5.5rem]" aria-hidden="true"></th>
+                      <th
+                        class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-isis-dark/55 min-w-[8rem] whitespace-nowrap"
+                      >
+                        Valor
+                      </th>
+                      <th
+                        class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-isis-dark/55 min-w-[7.5rem] whitespace-nowrap"
+                      >
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (order of orders(); track order.id) {
-                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors group">
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-dark">{{ order.customer }}</td>
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-dark">{{ order.product }}</td>
-                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-dark tabular-nums">
+                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
+                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ order.customer }}</td>
+                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ order.product }}</td>
+                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums">
                           {{ order.date | date: 'dd/MM/yyyy' }}
                         </td>
                         <td class="px-6 py-5 align-middle text-center">
                           <span class="text-sm font-semibold uppercase tracking-wide text-isis-blue">{{ order.status }}</span>
                         </td>
-                        <td class="px-6 py-5 align-middle text-right text-sm font-semibold text-isis-blue tabular-nums">
-                          {{ order.total | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+                        <td
+                          class="px-6 py-5 align-middle text-right text-sm font-semibold text-isis-blue tabular-nums min-w-[8rem] whitespace-nowrap"
+                        >
+                          {{ formatOrderBrl(order.total) }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-right">
-                          <div class="inline-flex items-center justify-end gap-0.5">
+                        <td class="px-6 py-5 align-middle text-right whitespace-nowrap shrink-0 min-w-[7.5rem]">
+                          <div class="inline-flex items-center justify-end gap-1">
                             <button
                               type="button"
                               (click)="openOrderModal(order)"
                               aria-label="Editar pedido"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-light rounded-xl transition-all text-isis-blue scale-90"
+                              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-isis-blue transition-all hover:bg-isis-light"
                             >
-                              <mat-icon>edit</mat-icon>
+                              <mat-icon class="!h-5 !w-5 !text-[20px]">edit</mat-icon>
                             </button>
                             <button
                               type="button"
                               (click)="deleteOrderRow(order)"
                               aria-label="Remover pedido"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-rose/10 rounded-xl transition-all text-isis-rose scale-90"
+                              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-isis-rose transition-all hover:bg-isis-rose/10"
                             >
-                              <mat-icon>delete</mat-icon>
+                              <mat-icon class="!h-5 !w-5 !text-[20px]">delete</mat-icon>
                             </button>
                           </div>
                         </td>
@@ -361,12 +515,12 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                   </thead>
                   <tbody>
                     @for (customer of customers(); track customer.id) {
-                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors group">
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-dark">{{ customer.name }}</td>
+                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
+                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ customer.name }}</td>
                         <td class="px-6 py-5 align-middle text-left">
                           <div class="flex flex-col gap-1">
-                            <span class="text-sm font-semibold text-isis-dark">{{ customer.email }}</span>
-                            <span class="text-sm font-medium text-isis-dark/80 font-mono tracking-tight">{{ customer.phone }}</span>
+                            <span class="text-sm font-semibold text-isis-blue">{{ customer.email }}</span>
+                            <span class="text-sm font-medium text-isis-blue/90 font-mono tracking-tight">{{ customer.phone }}</span>
                           </div>
                         </td>
                         <td class="px-6 py-5 align-middle text-center">
@@ -384,7 +538,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                               type="button"
                               (click)="openCustomerModal(customer)"
                               aria-label="Editar cliente"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-light rounded-xl transition-all text-isis-blue scale-90"
+                              class="p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light scale-90"
                             >
                               <mat-icon>edit</mat-icon>
                             </button>
@@ -392,7 +546,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                               type="button"
                               (click)="deleteCustomerRow(customer)"
                               aria-label="Remover cliente"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-rose/10 rounded-xl transition-all text-isis-rose scale-90"
+                              class="p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 scale-90"
                             >
                               <mat-icon>delete</mat-icon>
                             </button>
@@ -458,12 +612,12 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                   </thead>
                   <tbody>
                     @for (product of products(); track product.id) {
-                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors group">
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-dark">{{ product.name }}</td>
+                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
+                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ product.name }}</td>
                         <td class="px-6 py-5 align-middle text-left text-sm font-semibold uppercase tracking-wide text-isis-blue">
                           {{ product.category }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-right text-sm font-semibold text-isis-dark tabular-nums">
+                        <td class="px-6 py-5 align-middle text-right text-sm font-semibold text-isis-blue tabular-nums">
                           {{ product.price | currency: 'BRL' }}
                         </td>
                         <td class="px-6 py-5 align-middle text-right">
@@ -472,7 +626,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                               type="button"
                               (click)="openProductModal(product)"
                               aria-label="Editar produto"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-light rounded-xl transition-all text-isis-blue scale-90"
+                              class="p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light scale-90"
                             >
                               <mat-icon>edit</mat-icon>
                             </button>
@@ -480,7 +634,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                               type="button"
                               (click)="deleteProductRow(product)"
                               aria-label="Remover produto"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-rose/10 rounded-xl transition-all text-isis-rose scale-90"
+                              class="p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 scale-90"
                             >
                               <mat-icon>delete</mat-icon>
                             </button>
@@ -537,7 +691,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                   </thead>
                   <tbody>
                     @for (row of portfolioRows(); track row.id) {
-                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors group">
+                      <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
                         <td class="px-6 py-5 align-middle text-left">
                           <img
                             [src]="mediaUrl(row.imageUrl)"
@@ -546,7 +700,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                             referrerpolicy="no-referrer"
                           />
                         </td>
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-dark">{{ row.title }}</td>
+                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ row.title }}</td>
                         <td class="px-6 py-5 align-middle text-center">
                           <span class="text-sm font-semibold uppercase tracking-wide text-isis-blue">
                             {{ row.active ? 'Sim' : 'Não' }}
@@ -558,7 +712,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                               type="button"
                               (click)="openPortfolioModal(row)"
                               aria-label="Editar item de portfólio"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-light rounded-xl transition-all text-isis-blue scale-90 inline-flex align-middle"
+                              class="p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light scale-90 inline-flex align-middle"
                             >
                               <mat-icon>edit</mat-icon>
                             </button>
@@ -566,7 +720,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                               type="button"
                               (click)="deletePortfolioRow(row)"
                               aria-label="Remover item de portfólio"
-                              class="p-2 opacity-0 group-hover:opacity-100 hover:bg-isis-rose/10 rounded-xl transition-all text-isis-rose scale-90 inline-flex align-middle"
+                              class="p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 scale-90 inline-flex align-middle"
                             >
                               <mat-icon>delete</mat-icon>
                             </button>
@@ -696,6 +850,100 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                   <app-input label="Estoque inicial" type="text" placeholder="0" mask="stock-qty" [(value)]="productFormStockStr" />
                   <app-select label="Etiqueta (catálogo)" [options]="productLabelOptions" [(value)]="productFormLabel" />
                   <app-select label="Disponibilidade" [options]="availabilityOptions" [(value)]="productFormAvailability" />
+                  @if (isGarmentProductCategory(productFormCategory() || '')) {
+                    <div class="flex flex-col gap-3 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-4">
+                      <span class="px-0.5 text-sm font-semibold tracking-wide text-isis-dark/70">Tamanhos</span>
+                      <div class="flex flex-wrap gap-2">
+                        @for (sz of brDisplaySizes; track sz) {
+                          <label
+                            class="inline-flex cursor-pointer select-none items-center gap-2 rounded-lg border border-isis-blue/15 bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-isis-dark shadow-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              class="h-4 w-4 accent-isis-blue"
+                              [checked]="productFormAvailableSizes().has(sz)"
+                              (change)="toggleProductAvailSize(sz, $any($event.target).checked)"
+                            />
+                            {{ sz }}
+                          </label>
+                        }
+                      </div>
+                    </div>
+                  }
+                  <div class="flex flex-col gap-3 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-0.5">
+                      <span class="text-xs font-bold uppercase tracking-wider text-isis-dark/50">Cores do produto</span>
+                      <button
+                        type="button"
+                        class="text-xs font-bold uppercase tracking-wide text-isis-blue hover:text-isis-rose"
+                        (click)="addProductColorRow()"
+                      >
+                        + Adicionar cor
+                      </button>
+                    </div>
+                    @for (row of productFormColorRows(); track $index) {
+                      <div
+                        class="flex flex-col gap-3 rounded-xl border border-isis-blue/10 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center"
+                      >
+                        <label class="flex shrink-0 items-center gap-2 text-xs font-bold uppercase text-isis-dark/50">
+                          Cor
+                          <input
+                            type="color"
+                            class="h-9 w-14 cursor-pointer rounded border border-isis-blue/15 bg-white"
+                            [value]="row.hex"
+                            (input)="updateProductColorRow($index, { hex: $any($event.target).value })"
+                          />
+                        </label>
+                        <label class="inline-flex shrink-0 items-center gap-2 text-xs font-bold uppercase text-isis-dark/50">
+                          <input
+                            type="checkbox"
+                            class="h-4 w-4 accent-isis-blue"
+                            [checked]="row.available"
+                            (change)="updateProductColorRow($index, { available: $any($event.target).checked })"
+                          />
+                          Disponível
+                        </label>
+                        @if (row.imageUrl) {
+                          <img
+                            [src]="mediaUrl(row.imageUrl)"
+                            alt=""
+                            class="h-12 w-12 shrink-0 rounded-lg border border-isis-blue/10 object-cover"
+                          />
+                        }
+                        <div class="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[12rem]">
+                          <input
+                            [id]="'pcolor-file-' + $index"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                            class="sr-only"
+                            (change)="onProductColorImageSelected($index, $event)"
+                          />
+                          <label
+                            [for]="'pcolor-file-' + $index"
+                            class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-isis-blue/30 bg-isis-light/40 px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-isis-blue shadow-sm transition-colors hover:border-isis-blue/50 hover:bg-isis-light/70"
+                          >
+                            <mat-icon class="!h-8 !w-8 shrink-0 !text-[28px] leading-none">add_photo_alternate</mat-icon>
+                            @if (row.imageUrl) {
+                              Alterar imagem da cor
+                            } @else {
+                              Imagem da cor (opcional)
+                            }
+                          </label>
+                          <span class="text-[11px] font-medium text-isis-dark/45">JPG, PNG ou WebP · máx. 25 MB</span>
+                        </div>
+                        @if (productColorRowUploading() === $index) {
+                          <span class="shrink-0 text-[11px] font-semibold text-isis-dark/50">A enviar…</span>
+                        }
+                        <button
+                          type="button"
+                          class="shrink-0 text-xs font-bold uppercase text-isis-rose transition-colors hover:underline sm:ml-auto"
+                          (click)="removeProductColorRow($index)"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    }
+                  </div>
                   <div class="flex flex-col gap-3 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-4">
                     <span class="text-xs font-bold uppercase tracking-wider text-isis-dark/50 px-0.5">Imagem (JPG, PNG ou WEBP)</span>
                     @if (productFormImageUrl()) {
@@ -716,6 +964,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                     @if (productImageUploading()) {
                       <p class="text-xs text-isis-dark/45">A enviar imagem…</p>
                     }
+                    <p class="text-[11px] font-medium text-isis-dark/45 px-0.5">Máx. 25 MB · JPG, PNG ou WebP</p>
                   </div>
                   <app-button class="w-full shrink-0 pb-1 pt-2" (click)="saveProduct()">
                     {{ selectedProduct() ? 'Salvar alterações' : 'Cadastrar produto' }}
@@ -802,6 +1051,15 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
 export class Dashboard {
   private readonly api = inject(ArteIsisApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ui = inject(UiDialogService);
+
+  /** Lista de pedidos: BRL estável (evita CurrencyPipe vazio sem locale comum). */
+  formatOrderBrl(total: number): string {
+    if (!Number.isFinite(total)) {
+      return '—';
+    }
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+  }
 
   /** Resolve `/api/public/media/...` para `<img src>`. */
   protected readonly mediaUrl = resolvePublicMediaUrl;
@@ -883,6 +1141,12 @@ export class Dashboard {
   productFormAvailability = model('Disponível');
   productFormImageUrl = model('');
   productImageUploading = signal(false);
+  /** Tamanhos BR marcados como disponíveis (apenas categorias vestuário). */
+  productFormAvailableSizes = signal<Set<string>>(new Set());
+  productFormColorRows = signal<{ hex: string; imageUrl: string; available: boolean }[]>([]);
+  productColorRowUploading = signal<number | null>(null);
+
+  readonly brDisplaySizes = [...BR_DISPLAY_SIZES];
 
   portfolioFormTitle = model('');
   portfolioFormImageUrl = model('');
@@ -961,6 +1225,12 @@ export class Dashboard {
               availability: r.availability,
               imageUrl: r.imageUrl,
               sizes: r.sizes ?? [],
+              availableSizes: r.availableSizes ?? [],
+              colorVariants: (r.colorVariants ?? []).map((c) => ({
+                hex: c.hex,
+                imageUrl: c.imageUrl ?? '',
+                available: c.available,
+              })),
             })),
           ),
         error: (e) => console.error(e),
@@ -1012,6 +1282,34 @@ export class Dashboard {
       this.productFormLabel.set(product.label ?? '');
       this.productFormAvailability.set(product.availability ?? 'Disponível');
       this.productFormImageUrl.set(product.imageUrl ?? '');
+      const garment = this.isGarmentProductCategory(product.category);
+      if (garment) {
+        const offered = new Set<string>();
+        for (const s of product.sizes ?? []) {
+          if ((BR_DISPLAY_SIZES as readonly string[]).includes(s)) {
+            offered.add(s);
+          }
+        }
+        if (offered.size === 0) {
+          BR_DISPLAY_SIZES.forEach((s) => offered.add(s));
+        }
+        const avail = new Set<string>();
+        for (const s of product.availableSizes ?? []) {
+          if (offered.has(s)) {
+            avail.add(s);
+          }
+        }
+        this.productFormAvailableSizes.set(avail.size > 0 ? avail : new Set(offered));
+      } else {
+        this.productFormAvailableSizes.set(new Set());
+      }
+      this.productFormColorRows.set(
+        (product.colorVariants ?? []).map((c) => ({
+          hex: c.hex?.trim() || '#3b6b8a',
+          imageUrl: (c.imageUrl ?? '').trim(),
+          available: !!c.available,
+        })),
+      );
     } else {
       this.productFormName.set('');
       this.productFormCategory.set('Camisetas');
@@ -1020,6 +1318,8 @@ export class Dashboard {
       this.productFormLabel.set('');
       this.productFormAvailability.set('Disponível');
       this.productFormImageUrl.set('');
+      this.productFormAvailableSizes.set(new Set(BR_DISPLAY_SIZES));
+      this.productFormColorRows.set([]);
     }
     this.showProductForm.set(true);
   }
@@ -1031,13 +1331,70 @@ export class Dashboard {
     if (!file) {
       return;
     }
+    const err = validateImageFileForUpload(file);
+    if (err) {
+      void this.ui.alert(err, 'Upload');
+      return;
+    }
     this.productImageUploading.set(true);
     this.api
       .uploadImage(file)
       .pipe(finalize(() => this.productImageUploading.set(false)))
       .subscribe({
         next: (res) => this.productFormImageUrl.set(res.url),
-        error: () => window.alert('Não foi possível enviar a imagem. Usa JPG, PNG ou WEBP (máx. 5 MB).'),
+        error: (e) =>
+          void this.ui.alert(adminHttpErrorMessage(e, 'Não foi possível enviar a imagem. Use JPG, PNG ou WebP (máximo de 25 MB).'), 'Upload'),
+      });
+  }
+
+  isGarmentProductCategory(category: string): boolean {
+    return GARMENT_CATEGORIES_FOR_SIZES.has(String(category ?? '').trim());
+  }
+
+  toggleProductAvailSize(size: string, checked: boolean): void {
+    const next = new Set(this.productFormAvailableSizes());
+    if (checked) {
+      next.add(size);
+    } else {
+      next.delete(size);
+    }
+    this.productFormAvailableSizes.set(next);
+  }
+
+  addProductColorRow(): void {
+    this.productFormColorRows.update((rows) => [...rows, { hex: '#3b6b8a', imageUrl: '', available: false }]);
+  }
+
+  removeProductColorRow(index: number): void {
+    this.productFormColorRows.update((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  updateProductColorRow(index: number, partial: Partial<{ hex: string; imageUrl: string; available: boolean }>): void {
+    this.productFormColorRows.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, ...partial } : row)),
+    );
+  }
+
+  onProductColorImageSelected(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    const err = validateImageFileForUpload(file);
+    if (err) {
+      void this.ui.alert(err, 'Upload');
+      return;
+    }
+    this.productColorRowUploading.set(index);
+    this.api
+      .uploadImage(file)
+      .pipe(finalize(() => this.productColorRowUploading.set(null)))
+      .subscribe({
+        next: (res) => this.updateProductColorRow(index, { imageUrl: res.url }),
+        error: (e) =>
+          void this.ui.alert(adminHttpErrorMessage(e, 'Não foi possível enviar a imagem desta cor.'), 'Upload'),
       });
   }
 
@@ -1048,13 +1405,19 @@ export class Dashboard {
     if (!file) {
       return;
     }
+    const err = validateImageFileForUpload(file);
+    if (err) {
+      void this.ui.alert(err, 'Upload');
+      return;
+    }
     this.portfolioImageUploading.set(true);
     this.api
       .uploadImage(file)
       .pipe(finalize(() => this.portfolioImageUploading.set(false)))
       .subscribe({
         next: (res) => this.portfolioFormImageUrl.set(res.url),
-        error: () => window.alert('Não foi possível enviar a imagem. Usa JPG, PNG ou WEBP (máx. 5 MB).'),
+        error: (e) =>
+          void this.ui.alert(adminHttpErrorMessage(e, 'Não foi possível enviar a imagem. Use JPG, PNG ou WebP (máximo de 25 MB).'), 'Upload'),
       });
   }
 
@@ -1102,12 +1465,12 @@ export class Dashboard {
   saveOrder() {
     const cid = String(this.orderCustomerId() ?? '').trim();
     if (!cid) {
-      window.alert('Selecione um cliente.');
+      void this.ui.alert('Selecione um cliente.', 'Pedido');
       return;
     }
     const desc = this.orderDescription().trim();
     if (!desc) {
-      window.alert('Informe a descrição do pedido.');
+      void this.ui.alert('Informe a descrição do pedido.', 'Pedido');
       return;
     }
     const qtyDigits = this.orderQuantityStr().replace(/\D/g, '');
@@ -1129,7 +1492,7 @@ export class Dashboard {
       },
       error: (e) => {
         console.error(e);
-        window.alert('Não foi possível salvar o pedido.');
+        void this.ui.alert('Não foi possível salvar o pedido.', 'Pedido');
       },
     });
   }
@@ -1139,15 +1502,15 @@ export class Dashboard {
     const email = this.customerFormEmail().trim().toLowerCase();
     const phoneDigits = stripPhoneDigits(this.customerFormPhone());
     if (!name || !email || !phoneDigits) {
-      window.alert('Preencha nome, e-mail e telefone.');
+      void this.ui.alert('Preencha nome, e-mail e telefone.', 'Cliente');
       return;
     }
     if (!isValidEmail(email)) {
-      window.alert('E-mail inválido.');
+      void this.ui.alert('E-mail inválido.', 'Cliente');
       return;
     }
     if (!isValidBrazilPhoneDigits(phoneDigits)) {
-      window.alert('Telefone inválido (10 ou 11 dígitos com DDD).');
+      void this.ui.alert('Telefone inválido (10 ou 11 dígitos com DDD).', 'Cliente');
       return;
     }
     const phone = phoneDigits;
@@ -1162,7 +1525,7 @@ export class Dashboard {
       },
       error: (e) => {
         console.error(e);
-        window.alert('Não foi possível salvar o cliente.');
+        void this.ui.alert('Não foi possível salvar o cliente.', 'Cliente');
       },
     });
   }
@@ -1173,7 +1536,23 @@ export class Dashboard {
     const price = Math.max(0, parseBrlCurrencyInput(this.productFormPriceStr()));
     const stock = Math.max(0, Math.floor(parseInt(this.productFormStockStr().replace(/\D/g, ''), 10) || 0));
     if (!name || !category) {
-      window.alert('Preencha nome e categoria.');
+      void this.ui.alert('Preencha nome e categoria.', 'Produto');
+      return;
+    }
+    if (price <= 0) {
+      void this.ui.alert('Informe um valor unitário maior que zero.', 'Produto');
+      return;
+    }
+    if (stock < 1) {
+      void this.ui.alert('O estoque inicial precisa ser de pelo menos 1 unidade (estoque zero não é permitido).', 'Produto');
+      return;
+    }
+    const garment = this.isGarmentProductCategory(category);
+    const colorRows = this.productFormColorRows();
+    const S = garment ? this.productFormAvailableSizes().size : 0;
+    const stockErr = validateProductStockCoherence({ stock, garment, availableSizeCount: S, colorRows });
+    if (stockErr) {
+      void this.ui.alert(stockErr, 'Produto');
       return;
     }
     const labelRaw = String(this.productFormLabel() ?? '').trim();
@@ -1182,6 +1561,13 @@ export class Dashboard {
     const sel = this.selectedProduct();
     const img = this.productFormImageUrl().trim();
     const imageUrl = img || (sel?.imageUrl?.trim() ?? '') || null;
+    const sizes = garment ? [...BR_DISPLAY_SIZES] : [];
+    const availableSizes = garment ? [...this.productFormAvailableSizes()] : [];
+    const colorVariants = colorRows.map((r) => ({
+      hex: r.hex.trim(),
+      imageUrl: r.imageUrl.trim() || null,
+      available: r.available,
+    }));
     const body = {
       name,
       unitPrice: price,
@@ -1191,7 +1577,9 @@ export class Dashboard {
       label,
       availability,
       active: true,
-      sizes: sel?.sizes ?? [],
+      sizes,
+      availableSizes,
+      colorVariants,
     };
     const req$ = sel ? this.api.updateProduct(sel.id, body) : this.api.createProduct(body);
     req$.subscribe({
@@ -1201,7 +1589,7 @@ export class Dashboard {
       },
       error: (e) => {
         console.error(e);
-        window.alert('Não foi possível salvar o produto.');
+        void this.ui.alert(adminHttpErrorMessage(e, 'Não foi possível salvar o produto.'), 'Produto');
       },
     });
   }
@@ -1215,6 +1603,9 @@ export class Dashboard {
     this.selectedCustomer.set(null);
     this.selectedProduct.set(null);
     this.selectedPortfolio.set(null);
+    this.productFormColorRows.set([]);
+    this.productFormAvailableSizes.set(new Set());
+    this.productColorRowUploading.set(null);
   }
 
   goPortfolio() {
@@ -1247,7 +1638,7 @@ export class Dashboard {
     const title = this.portfolioFormTitle().trim();
     const path = this.portfolioFormImageUrl().trim() || (this.selectedPortfolio()?.imageUrl?.trim() ?? '');
     if (!title || !path) {
-      window.alert('Preencha o título e envie uma imagem (JPG, PNG ou WEBP).');
+      void this.ui.alert('Preencha o título e envie uma imagem (JPG, PNG ou WebP).', 'Portfólio');
       return;
     }
     const body = { title, imageUrl: path, active: this.portfolioFormActive() };
@@ -1258,55 +1649,56 @@ export class Dashboard {
         this.closeModals();
         this.refreshPortfolioAdmin();
       },
-      error: () => window.alert('Não foi possível salvar o item de portfólio.'),
+      error: () => void this.ui.alert('Não foi possível salvar o item de portfólio.', 'Portfólio'),
     });
   }
 
-  deleteOrderRow(order: Order) {
-    if (!window.confirm('Remover este pedido? Esta ação não pode ser desfeita.')) {
-      return;
-    }
-    this.api.deleteOrder(order.id).subscribe({
-      next: () => this.reloadOrders(),
-      error: () => window.alert('Não foi possível remover o pedido.'),
+  deleteOrderRow(order: Order): void {
+    void this.ui.confirm('Remover este pedido? Esta ação não pode ser desfeita.', 'Remover pedido').then((ok) => {
+      if (!ok) return;
+      this.api.deleteOrder(order.id).subscribe({
+        next: () => this.reloadOrders(),
+        error: () => void this.ui.alert('Não foi possível remover o pedido.', 'Erro'),
+      });
     });
   }
 
-  deleteCustomerRow(customer: Customer) {
-    if (!window.confirm('Remover este cliente? Esta ação não pode ser desfeita.')) {
-      return;
-    }
-    this.api.deleteCustomer(customer.id).subscribe({
-      next: () => this.refreshCustomers(),
-      error: (e: unknown) => {
-        if (e instanceof HttpErrorResponse && e.status === 409) {
-          window.alert(
-            'Não é possível remover este cliente enquanto existirem pedidos associados. Remova ou reatribua os pedidos primeiro.',
-          );
-        } else {
-          window.alert('Não foi possível remover o cliente.');
-        }
-      },
+  deleteCustomerRow(customer: Customer): void {
+    void this.ui.confirm('Remover este cliente? Esta ação não pode ser desfeita.', 'Remover cliente').then((ok) => {
+      if (!ok) return;
+      this.api.deleteCustomer(customer.id).subscribe({
+        next: () => this.refreshCustomers(),
+        error: (e: unknown) => {
+          if (e instanceof HttpErrorResponse && e.status === 409) {
+            void this.ui.alert(
+              'Não é possível remover este cliente enquanto existirem pedidos associados. Remova ou reatribua os pedidos primeiro.',
+              'Cliente',
+            );
+          } else {
+            void this.ui.alert('Não foi possível remover o cliente.', 'Erro');
+          }
+        },
+      });
     });
   }
 
-  deleteProductRow(product: Product) {
-    if (!window.confirm('Remover este produto? Esta ação não pode ser desfeita.')) {
-      return;
-    }
-    this.api.deleteProduct(product.id).subscribe({
-      next: () => this.refreshProducts(),
-      error: () => window.alert('Não foi possível remover o produto.'),
+  deleteProductRow(product: Product): void {
+    void this.ui.confirm('Remover este produto? Esta ação não pode ser desfeita.', 'Remover produto').then((ok) => {
+      if (!ok) return;
+      this.api.deleteProduct(product.id).subscribe({
+        next: () => this.refreshProducts(),
+        error: () => void this.ui.alert('Não foi possível remover o produto.', 'Erro'),
+      });
     });
   }
 
-  deletePortfolioRow(row: PortfolioRow) {
-    if (!window.confirm('Remover este item do portfólio?')) {
-      return;
-    }
-    this.api.deletePortfolioItem(row.id).subscribe({
-      next: () => this.refreshPortfolioAdmin(),
-      error: () => window.alert('Não foi possível remover.'),
+  deletePortfolioRow(row: PortfolioRow): void {
+    void this.ui.confirm('Remover este item do portfólio?', 'Portfólio').then((ok) => {
+      if (!ok) return;
+      this.api.deletePortfolioItem(row.id).subscribe({
+        next: () => this.refreshPortfolioAdmin(),
+        error: () => void this.ui.alert('Não foi possível remover o item.', 'Erro'),
+      });
     });
   }
 

@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  afterNextRender,
   inject,
   model,
   signal,
@@ -12,12 +11,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { combineLatest, debounceTime, switchMap } from 'rxjs';
+import { combineLatest, debounceTime, merge, of, skip, switchMap } from 'rxjs';
 import { ProductCard, Product, mapCatalogRowToProduct } from '../home/featured-products';
 import { ArteIsisApiService } from '../../core/arteisis-api.service';
 
-const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', '2X'] as const;
-const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Uniformes', 'Escolar', 'Estampas', 'Infantil', 'Acessórios'] as const;
+/** Alinhado às categorias do painel admin (filtro = valor gravado em `product.category`). */
+const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Escolar', 'Uniformes', 'Estampas', 'Infantil', 'Acessórios'] as const;
 
 @Component({
   selector: 'app-product-list',
@@ -38,50 +37,38 @@ const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Uniformes', 'Escolar', 'Esta
 
           <div class="space-y-10">
             <div class="space-y-4">
-              <h3 class="text-sm font-bold uppercase tracking-widest text-isis-dark">Tamanho</h3>
-              <div class="grid grid-cols-3 gap-2">
-                @for (size of sizeOptions; track size) {
-                  <button
-                    type="button"
-                    (click)="toggleSize(size)"
-                    [class.bg-isis-blue]="selectedSizes().includes(size)"
-                    [class.text-white]="selectedSizes().includes(size)"
-                    [class.border-isis-blue]="selectedSizes().includes(size)"
-                    class="py-3 border border-isis-blue/10 rounded-lg text-sm hover:border-isis-blue hover:bg-isis-blue/5 transition-all"
-                  >
-                    {{ size }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <div class="space-y-4">
               <h3 class="text-sm font-bold uppercase tracking-widest text-isis-dark">Disponibilidade</h3>
               <div class="flex flex-col gap-2">
                 <button
                   type="button"
                   (click)="availabilityFilter.set('')"
-                  [class.bg-isis-blue]="availabilityFilter() === ''"
-                  [class.text-white]="availabilityFilter() === ''"
-                  class="py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm hover:bg-isis-blue/5 transition-all"
+                  [class.border-isis-blue]="availabilityFilter() === ''"
+                  [class.bg-isis-blue/10]="availabilityFilter() === ''"
+                  [class.text-isis-blue]="availabilityFilter() === ''"
+                  [class.font-semibold]="availabilityFilter() === ''"
+                  class="py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm text-isis-dark transition-all hover:bg-isis-blue/5 hover:text-isis-blue"
                 >
                   Todas
                 </button>
                 <button
                   type="button"
                   (click)="availabilityFilter.set('Disponível')"
-                  [class.bg-isis-blue]="availabilityFilter() === 'Disponível'"
-                  [class.text-white]="availabilityFilter() === 'Disponível'"
-                  class="py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm hover:bg-isis-blue/5 transition-all"
+                  [class.border-isis-blue]="availabilityFilter() === 'Disponível'"
+                  [class.bg-isis-blue/10]="availabilityFilter() === 'Disponível'"
+                  [class.text-isis-blue]="availabilityFilter() === 'Disponível'"
+                  [class.font-semibold]="availabilityFilter() === 'Disponível'"
+                  class="py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm text-isis-dark transition-all hover:bg-isis-blue/5 hover:text-isis-blue"
                 >
                   Disponível
                 </button>
                 <button
                   type="button"
                   (click)="availabilityFilter.set('Sob encomenda')"
-                  [class.bg-isis-blue]="availabilityFilter() === 'Sob encomenda'"
-                  [class.text-white]="availabilityFilter() === 'Sob encomenda'"
-                  class="py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm hover:bg-isis-blue/5 transition-all"
+                  [class.border-isis-blue]="availabilityFilter() === 'Sob encomenda'"
+                  [class.bg-isis-blue/10]="availabilityFilter() === 'Sob encomenda'"
+                  [class.text-isis-blue]="availabilityFilter() === 'Sob encomenda'"
+                  [class.font-semibold]="availabilityFilter() === 'Sob encomenda'"
+                  class="py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm text-isis-dark transition-all hover:bg-isis-blue/5 hover:text-isis-blue"
                 >
                   Sob encomenda
                 </button>
@@ -95,26 +82,14 @@ const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Uniformes', 'Escolar', 'Esta
                   <button
                     type="button"
                     (click)="toggleCategory(cat)"
-                    [class.bg-isis-blue]="selectedCategories().includes(cat)"
-                    [class.text-white]="selectedCategories().includes(cat)"
-                    class="w-full py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm hover:bg-isis-blue/5 transition-all"
+                    [class.border-isis-blue]="selectedCategories().includes(cat)"
+                    [class.bg-isis-blue/10]="selectedCategories().includes(cat)"
+                    [class.text-isis-blue]="selectedCategories().includes(cat)"
+                    [class.font-semibold]="selectedCategories().includes(cat)"
+                    class="w-full py-2 px-3 rounded-lg border border-isis-blue/10 text-left text-sm text-isis-dark transition-all hover:bg-isis-blue/5 hover:text-isis-blue"
                   >
                     {{ cat }}
                   </button>
-                }
-              </div>
-            </div>
-
-            <div class="space-y-4 border-t border-isis-blue/5 pt-8">
-              <h3 class="text-sm font-bold uppercase tracking-widest text-isis-dark">Cores</h3>
-              <div class="flex flex-wrap gap-3">
-                @for (color of colors; track color) {
-                  <button
-                    type="button"
-                    [style.background]="color"
-                    class="w-8 h-8 rounded-full border border-isis-blue/10 shadow-sm hover:scale-110 transition-transform"
-                    aria-label="Filtro de cor (visual apenas)"
-                  ></button>
                 }
               </div>
             </div>
@@ -171,14 +146,11 @@ export class ProductList {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
 
-  readonly sizeOptions = SIZE_OPTIONS;
   readonly categoryOptions = CATEGORY_OPTIONS;
-  colors = ['#000000', '#FFFFFF', '#666666', '#FF0000', '#3b6b8a', '#db7077', '#0000FF', '#00FF00'];
 
   searchQuery = model('');
   availabilityFilter = model('');
   selectedCategories = signal<string[]>([]);
-  selectedSizes = signal<string[]>([]);
 
   products = signal<Product[]>([]);
 
@@ -188,37 +160,29 @@ export class ProductList {
       this.selectedCategories.set(c ? [c] : []);
     });
 
-    afterNextRender(() => {
-      combineLatest([
-        toObservable(this.searchQuery).pipe(debounceTime(300)),
-        toObservable(this.selectedCategories),
-        toObservable(this.selectedSizes),
-        toObservable(this.availabilityFilter),
-      ])
-        .pipe(
-          switchMap(([q, cats, sizes, av]) =>
-            this.api.listCatalog({
-              q: q.trim() || undefined,
-              categories: cats.length ? [...cats] : undefined,
-              sizes: sizes.length ? [...sizes] : undefined,
-              availability: av.trim() || undefined,
-            }),
-          ),
-          takeUntilDestroyed(this.destroyRef),
-        )
-        .subscribe({
-          next: (rows) => this.products.set(rows.map(mapCatalogRowToProduct)),
-          error: (e) => {
-            console.error(e);
-            this.products.set([]);
-          },
-        });
-    });
-  }
+    const search$ = merge(
+      of(this.searchQuery()),
+      toObservable(this.searchQuery).pipe(skip(1), debounceTime(300)),
+    );
 
-  toggleSize(size: string) {
-    const cur = this.selectedSizes();
-    this.selectedSizes.set(cur.includes(size) ? cur.filter((s) => s !== size) : [...cur, size]);
+    combineLatest([search$, toObservable(this.selectedCategories), toObservable(this.availabilityFilter)])
+      .pipe(
+        switchMap(([q, cats, av]) =>
+          this.api.listCatalog({
+            q: q.trim() || undefined,
+            categories: cats.length ? [...cats] : undefined,
+            availability: av.trim() || undefined,
+          }),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (rows) => this.products.set(rows.map(mapCatalogRowToProduct)),
+        error: (e) => {
+          console.error(e);
+          this.products.set([]);
+        },
+      });
   }
 
   toggleCategory(cat: string) {

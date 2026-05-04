@@ -10,11 +10,29 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { catchError, map, of, switchMap } from 'rxjs';
-import { ArteIsisApiService, CatalogProductApiRow } from '../../core/arteisis-api.service';
+import { ArteIsisApiService, CatalogProductApiRow, ProductColorVariantApiRow } from '../../core/arteisis-api.service';
 import { resolvePublicMediaUrl } from '../../core/media-url';
 import { CATALOG_IMAGE_PLACEHOLDER } from '../home/featured-products';
 
-const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '2X', '3XL', 'P', 'M', 'G', 'GG', 'XG'];
+const GARMENT_CATEGORIES = new Set(['Camisetas', 'Moletons', 'Uniformes', 'Infantil']);
+const BR_SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG'] as const;
+
+const SIZE_ORDER = [
+  ...BR_SIZES,
+  'XS',
+  'S',
+  'M',
+  'L',
+  'XL',
+  '2XL',
+  '2X',
+  '3XL',
+  'P',
+  'G',
+  'GG',
+  'XG',
+  'XGG',
+];
 
 const THUMB_FOCUS = ['50% 50%', '30% 20%', '70% 35%', '45% 70%', '60% 55%'] as const;
 
@@ -76,75 +94,62 @@ function sortSizes(sizes: string[]): string[] {
               }
             </div>
 
-            <div class="w-full lg:max-w-md bg-white border border-isis-blue/10 p-8 md:p-10 shadow-sm relative order-2 lg:order-3">
-              <button
-                type="button"
-                class="absolute top-6 right-6 text-isis-dark/25 hover:text-isis-rose transition-colors p-2"
-                aria-label="Favoritos (em breve)"
-              >
-                <span class="material-icons text-[22px]">favorite_border</span>
-              </button>
-
-              <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-tight text-isis-dark pr-10">
+            <div class="w-full lg:max-w-md bg-white border border-isis-blue/10 p-8 md:p-10 shadow-sm order-2 lg:order-3">
+              <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-tight text-isis-dark">
                 {{ p.name }}
               </h1>
               <p class="mt-4 text-2xl font-bold">{{ p.price | currency: 'BRL' }}</p>
-              <p class="text-xs text-isis-dark/45 mt-1">Preço com impostos conforme política da loja.</p>
 
-              <p class="mt-6 text-sm leading-relaxed text-isis-dark/80">
-                {{ description() }}
-              </p>
-
-              <div class="mt-8">
-                <p class="text-xs text-isis-dark/50 mb-3">Cor</p>
-                <div class="flex flex-wrap gap-2">
-                  @for (c of swatchColors; track c) {
-                    <button
-                      type="button"
-                      [style.background]="c"
-                      class="w-8 h-8 border border-isis-dark/20 shadow-sm rounded-sm hover:scale-105 transition-transform"
-                      [class.ring-2]="selectedColor() === c"
-                      [class.ring-isis-dark]="selectedColor() === c"
-                      [class.ring-offset-2]="selectedColor() === c"
-                      [attr.aria-pressed]="selectedColor() === c"
-                      [attr.aria-label]="'Selecionar cor ' + c"
-                      (click)="selectedColor.set(c)"
-                    >
-                      <span class="sr-only">{{ c }}</span>
-                    </button>
-                  }
+              @if (catalogColors().length > 0) {
+                <div class="mt-8">
+                  <p class="text-xs text-isis-dark/50 mb-3">Cor</p>
+                  <div class="flex flex-wrap gap-2">
+                    @for (c of catalogColors(); track $index) {
+                      <button
+                        type="button"
+                        [style.background]="c.hex"
+                        class="w-8 h-8 border border-isis-dark/20 shadow-sm rounded-sm hover:scale-105 transition-all"
+                        [class.ring-2]="selectedColor() === c.hex"
+                        [class.ring-isis-dark]="selectedColor() === c.hex"
+                        [class.ring-offset-2]="selectedColor() === c.hex"
+                        [class.opacity-40]="!c.available"
+                        [attr.aria-pressed]="selectedColor() === c.hex"
+                        [attr.aria-label]="'Selecionar cor ' + c.hex"
+                        (click)="selectedColor.set(c.hex)"
+                      >
+                        <span class="sr-only">{{ c.hex }}</span>
+                      </button>
+                    }
+                  </div>
                 </div>
-              </div>
+              }
 
-              <div class="mt-8">
-                <p class="text-xs text-isis-dark/50 mb-3">Tamanho</p>
-                <div class="flex flex-wrap gap-2">
-                  @for (sz of orderedSizes(); track sz) {
-                    <button
-                      type="button"
-                      (click)="selectedSize.set(sz)"
-                      class="min-w-[2.5rem] h-10 px-2 border text-xs font-bold uppercase tracking-wide transition-colors"
-                      [class.border-isis-dark]="selectedSize() === sz"
-                      [class.bg-isis-dark]="selectedSize() === sz"
-                      [class.text-white]="selectedSize() === sz"
-                      [class.border-isis-blue/15]="selectedSize() !== sz"
-                    >
-                      {{ sz }}
-                    </button>
-                  }
+              @if (showSizes()) {
+                <div class="mt-8">
+                  <p class="text-xs text-isis-dark/50 mb-3">Tamanho</p>
+                  <div class="flex flex-wrap gap-2">
+                    @for (sz of orderedSizes(); track sz) {
+                      <button
+                        type="button"
+                        (click)="selectedSize.set(sz)"
+                        class="min-w-[2.5rem] h-10 px-2 border text-xs font-bold uppercase tracking-wide transition-colors"
+                        [class.border-isis-dark]="selectedSize() === sz"
+                        [class.bg-isis-dark]="selectedSize() === sz"
+                        [class.text-white]="selectedSize() === sz"
+                        [class.border-isis-blue/15]="selectedSize() !== sz"
+                        [class.opacity-40]="!isSizeAvailable(sz)"
+                      >
+                        {{ sz }}
+                      </button>
+                    }
+                  </div>
                 </div>
-              </div>
-
-              <div class="mt-8 flex gap-4 text-[10px] font-accent uppercase tracking-widest text-isis-dark/40">
-                <span class="cursor-pointer hover:text-isis-blue">Guia de medidas</span>
-                <span>|</span>
-                <span class="cursor-pointer hover:text-isis-blue">Como encomendar</span>
-              </div>
+              }
 
               <a
                 routerLink="/"
                 fragment="contato"
-                class="mt-10 block w-full py-4 text-center text-sm font-bold uppercase tracking-widest bg-[#e8e6e3] text-isis-dark hover:bg-[#dddad5] transition-colors border border-isis-blue/10"
+                class="mt-10 block w-full border border-isis-blue/20 bg-isis-blue py-4 text-center text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 transition-colors hover:bg-isis-blue/90 hover:text-white"
               >
                 Encomendar
               </a>
@@ -163,7 +168,6 @@ export class ProductDetail {
   private readonly api = inject(ArteIsisApiService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly swatchColors = ['#e5e5e5', '#888888', '#1a1a1a', '#7eb8a8', '#f5f5f5', '#a8c4e0'];
   readonly thumbFocus = THUMB_FOCUS;
   readonly thumbIndices = [0, 1, 2, 3, 4] as const;
 
@@ -174,24 +178,33 @@ export class ProductDetail {
   row = signal<CatalogProductApiRow | null>(null);
   error = signal('');
 
+  catalogColors = computed<ProductColorVariantApiRow[]>(() => this.row()?.colors ?? []);
+
+  showSizes = computed(() => {
+    const r = this.row();
+    return !!r && GARMENT_CATEGORIES.has(r.category);
+  });
+
   mainImage = computed(() => {
     const r = this.row();
     if (!r) return CATALOG_IMAGE_PLACEHOLDER;
+    const hex = this.selectedColor();
+    const match = (r.colors ?? []).find((c) => c.hex === hex && c.imageUrl?.trim());
+    if (match?.imageUrl) {
+      const u = match.imageUrl.trim();
+      return resolvePublicMediaUrl(u) || u;
+    }
     const raw = r.image ?? CATALOG_IMAGE_PLACEHOLDER;
     return resolvePublicMediaUrl(raw) || raw;
   });
 
   orderedSizes = computed(() => {
     const r = this.row();
-    if (!r?.sizes?.length) return ['XS', 'S', 'M', 'L', 'XL', '2XL'];
-    return sortSizes([...r.sizes]);
-  });
-
-  description = computed(() => {
-    const r = this.row();
-    if (!r) return '';
-    const av = r.availability ?? '';
-    return `${r.category}${av ? ' · ' + av : ''}. Peça do catálogo Arte Isis — fale connosco para variantes e prazos.`;
+    if (!r) return [] as string[];
+    const garment = GARMENT_CATEGORIES.has(r.category);
+    const fromApi = r.sizes?.length ? [...r.sizes] : garment ? [...BR_SIZES] : [];
+    if (!fromApi.length) return [];
+    return sortSizes(fromApi);
   });
 
   constructor() {
@@ -217,9 +230,24 @@ export class ProductDetail {
         }
         this.error.set('');
         this.row.set(res.data);
-        const sizes = res.data.sizes ?? [];
-        const ordered = sizes.length ? sortSizes([...sizes]) : ['XS', 'S', 'M', 'L', 'XL', '2XL'];
-        this.selectedSize.set(ordered[0] ?? 'M');
+        const ordered = this.orderedSizes();
+        const avail = res.data.availableSizes ?? [];
+        const firstSize =
+          ordered.find((s) => (avail.length === 0 ? true : avail.includes(s))) ?? ordered[0] ?? null;
+        this.selectedSize.set(firstSize);
+        const cols = res.data.colors ?? [];
+        const firstHex = cols.find((c) => c.available)?.hex ?? cols[0]?.hex ?? '#1a1a1a';
+        this.selectedColor.set(firstHex);
       });
+  }
+
+  isSizeAvailable(size: string): boolean {
+    const r = this.row();
+    if (!r) return true;
+    const avail = r.availableSizes ?? [];
+    if (avail.length === 0) {
+      return true;
+    }
+    return avail.includes(size);
   }
 }

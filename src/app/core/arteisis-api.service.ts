@@ -10,7 +10,11 @@ export interface OrderApiRow {
   productSummary: string;
   date: string;
   status: string;
-  total: number;
+  /** Total em R$ (camelCase habitual). */
+  total?: number | string | null;
+  /** Alguns proxies/backends enviam o montante com este nome. */
+  totalAmount?: number | string | null;
+  valor?: number | string | null;
 }
 
 export interface CustomerApiRow {
@@ -19,6 +23,12 @@ export interface CustomerApiRow {
   email: string;
   phone: string;
   orders: number;
+}
+
+export interface ProductColorVariantApiRow {
+  hex: string;
+  imageUrl: string;
+  available: boolean;
 }
 
 export interface ProductAdminApiRow {
@@ -32,6 +42,8 @@ export interface ProductAdminApiRow {
   availability: string | null;
   active: boolean;
   sizes: string[];
+  availableSizes: string[];
+  colorVariants: ProductColorVariantApiRow[];
 }
 
 export interface CatalogProductApiRow {
@@ -43,6 +55,8 @@ export interface CatalogProductApiRow {
   label: string | null;
   availability: string | null;
   sizes: string[];
+  availableSizes: string[];
+  colors: ProductColorVariantApiRow[];
 }
 
 export interface OrderWriteBody {
@@ -144,6 +158,8 @@ export class ArteIsisApiService {
     availability?: string | null;
     active: boolean;
     sizes: string[];
+    availableSizes: string[];
+    colorVariants: { hex: string; imageUrl?: string | null; available: boolean }[];
   }): Observable<ProductAdminApiRow> {
     return this.http.post<ProductAdminApiRow>(`${this.base}/api/admin/products`, body);
   }
@@ -160,6 +176,8 @@ export class ArteIsisApiService {
       availability?: string | null;
       active: boolean;
       sizes: string[];
+      availableSizes: string[];
+      colorVariants: { hex: string; imageUrl?: string | null; available: boolean }[];
     },
   ): Observable<ProductAdminApiRow> {
     return this.http.put<ProductAdminApiRow>(`${this.base}/api/admin/products/${id}`, body);
