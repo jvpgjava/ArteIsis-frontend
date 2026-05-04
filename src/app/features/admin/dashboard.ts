@@ -10,10 +10,6 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { Button } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
@@ -264,45 +260,11 @@ function mapOrder(r: OrderApiRow): Order {
   };
 }
 
-/** `yyyy-MM-dd` → `Date` local (meio-dia evita desvio UTC). */
-function parseIsoLocalDate(iso: string): Date | null {
-  const t = String(iso ?? '').trim();
-  if (!t) {
-    return null;
-  }
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
-  if (!m) {
-    return null;
-  }
-  const y = +m[1];
-  const mo = +m[2];
-  const d = +m[3];
-  const dt = new Date(y, mo - 1, d, 12, 0, 0, 0);
-  if (Number.isNaN(dt.getTime()) || dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) {
-    return null;
-  }
-  return dt;
-}
-
-function formatLocalDateToIso(d: Date | null | undefined): string {
-  if (!d || !(d instanceof Date) || Number.isNaN(d.getTime())) {
-    return '';
-  }
-  const y = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
-  const da = String(d.getDate()).padStart(2, '0');
-  return `${y}-${mo}-${da}`;
-}
-
 @Component({
   selector: 'app-dashboard',
   imports: [
     CommonModule,
     MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     Button,
     Checkbox,
     Input,
@@ -329,7 +291,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
               <div
                 class="relative z-10 grid w-full grid-cols-1 gap-3 md:grid-cols-12 md:items-end md:gap-4"
               >
-                <div class="relative min-w-0 md:col-span-4 lg:col-span-5">
+                <div class="relative min-w-0 md:col-span-3 lg:col-span-4">
                   <label class="sr-only" for="orders-search-q">Pesquisar pedidos</label>
                   <mat-icon
                     class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-isis-dark/25 !h-[22px] !w-[22px] !text-[22px]"
@@ -350,39 +312,18 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                     [(value)]="statusFilter"
                   />
                 </div>
-                <div class="min-w-0 md:col-span-3 lg:col-span-2">
-                  <mat-form-field
-                    appearance="outline"
-                    class="arte-mat-date-field arte-mat-date-field--toolbar"
-                    subscriptSizing="dynamic"
-                  >
-                    <input
-                      matInput
-                      [matDatepicker]="ordersDatePicker"
-                      [(ngModel)]="ordersDateForPicker"
-                      placeholder="Data"
-                      readonly
-                      aria-label="Filtrar por data do pedido"
-                      class="font-sans text-xs font-bold uppercase tracking-wider"
-                    />
-                    <mat-datepicker-toggle matIconSuffix [for]="ordersDatePicker">
-                      <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
-                    </mat-datepicker-toggle>
-                    <mat-datepicker #ordersDatePicker panelClass="arte-datepicker-panel">
-                      <mat-datepicker-actions>
-                        <button type="button" class="arte-picker-btn-clear" (click)="clearOrdersDateFilter(ordersDatePicker)">
-                          Limpar
-                        </button>
-                        <button
-                          type="button"
-                          class="arte-picker-btn-today ms-2 sm:ms-3"
-                          (click)="setOrdersDateFilterToday(ordersDatePicker)"
-                        >
-                          Hoje
-                        </button>
-                      </mat-datepicker-actions>
-                    </mat-datepicker>
-                  </mat-form-field>
+                <div class="min-w-0 md:col-span-4 lg:col-span-3">
+                  <label class="sr-only" for="orders-filter-date">Filtrar por data do pedido</label>
+                  <input
+                    id="orders-filter-date"
+                    type="date"
+                    min="2000-01-01"
+                    max="2099-12-31"
+                    [ngModel]="dateFilter()"
+                    (ngModelChange)="dateFilter.set($event)"
+                    aria-label="Filtrar por data do pedido"
+                    class="font-sans h-[3.25rem] w-full min-w-0 rounded-xl border border-isis-blue/15 bg-white px-3 text-xs font-bold uppercase tracking-wider text-isis-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-isis-blue/20 [color-scheme:light]"
+                  />
                 </div>
                 <div class="flex w-full min-w-0 md:col-span-2 lg:col-span-2 md:justify-end">
                   <app-button
@@ -757,7 +698,7 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
               <div class="flex flex-col gap-8">
                 <app-select
                   label="Cliente"
-                  placeholder="Selecione o cliente"
+                  placeholder="Selecione"
                   [options]="customerSelectOptions()"
                   [(value)]="orderCustomerId"
                 />
@@ -771,33 +712,20 @@ function formatLocalDateToIso(d: Date | null | undefined): string {
                   <app-input label="Quantidade" type="text" placeholder="1" mask="order-qty" [(value)]="orderQuantityStr" />
                   <app-input label="Valor total" type="text" placeholder="R$ 0,00" mask="currency-brl" [(value)]="orderTotalStr" />
                 </div>
-                <mat-form-field appearance="outline" class="arte-mat-date-field w-full" subscriptSizing="dynamic">
-                  <mat-label class="text-xs font-bold uppercase tracking-wider text-isis-dark/50">Data do pedido</mat-label>
+                <div class="flex w-full flex-col gap-1.5">
+                  <label for="order-date-field" class="text-xs font-bold uppercase tracking-wider text-isis-dark/50 px-1">
+                    Data do pedido
+                  </label>
                   <input
-                    matInput
-                    [matDatepicker]="orderModalDatePicker"
-                    [(ngModel)]="orderModalDateForPicker"
-                    readonly
                     id="order-date-field"
+                    type="date"
+                    min="2000-01-01"
+                    max="2099-12-31"
+                    [ngModel]="orderDateStr()"
+                    (ngModelChange)="orderDateStr.set($event)"
+                    class="font-sans h-[3.25rem] w-full min-w-0 rounded-xl border border-isis-blue/15 bg-white px-3 text-sm font-semibold text-isis-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-isis-blue/20 [color-scheme:light]"
                   />
-                  <mat-datepicker-toggle matIconSuffix [for]="orderModalDatePicker">
-                    <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
-                  </mat-datepicker-toggle>
-                  <mat-datepicker #orderModalDatePicker panelClass="arte-datepicker-panel">
-                    <mat-datepicker-actions>
-                      <button type="button" class="arte-picker-btn-clear" (click)="clearOrderModalDate(orderModalDatePicker)">
-                        Limpar
-                      </button>
-                      <button
-                        type="button"
-                        class="arte-picker-btn-today ms-2 sm:ms-3"
-                        (click)="setOrderModalDateToday(orderModalDatePicker)"
-                      >
-                        Hoje
-                      </button>
-                    </mat-datepicker-actions>
-                  </mat-datepicker>
-                </mat-form-field>
+                </div>
                 <app-button class="w-full mt-2" (click)="saveOrder()">
                   {{ selectedOrder() ? 'Salvar alterações' : 'Criar pedido' }}
                 </app-button>
@@ -1078,42 +1006,6 @@ export class Dashboard {
   searchQuery = model('');
   statusFilter = model('');
   dateFilter = model('');
-  /** Cache ISO↔Date para `[(ngModel)]` do datepicker (evita novo `Date` a cada CD). */
-  private _ordersPickerIsoCache = '';
-  private _ordersPickerDateCache: Date | null = null;
-  private _orderModalPickerIsoCache = '';
-  private _orderModalPickerDateCache: Date | null = null;
-
-  get ordersDateForPicker(): Date | null {
-    const iso = this.dateFilter();
-    if (this._ordersPickerIsoCache !== iso) {
-      this._ordersPickerIsoCache = iso;
-      this._ordersPickerDateCache = parseIsoLocalDate(iso);
-    }
-    return this._ordersPickerDateCache;
-  }
-
-  set ordersDateForPicker(v: Date | string | null) {
-    this.onOrdersDateFilterChange(v instanceof Date ? v : null);
-    this._ordersPickerIsoCache = this.dateFilter();
-    this._ordersPickerDateCache = parseIsoLocalDate(this.dateFilter());
-  }
-
-  get orderModalDateForPicker(): Date | null {
-    const iso = this.orderDateStr();
-    if (this._orderModalPickerIsoCache !== iso) {
-      this._orderModalPickerIsoCache = iso;
-      this._orderModalPickerDateCache = parseIsoLocalDate(iso);
-    }
-    return this._orderModalPickerDateCache;
-  }
-
-  set orderModalDateForPicker(v: Date | string | null) {
-    this.onOrderModalDateChange(v instanceof Date ? v : null);
-    this._orderModalPickerIsoCache = this.orderDateStr();
-    this._orderModalPickerDateCache = parseIsoLocalDate(this.orderDateStr());
-  }
-
   customerSearchQuery = model('');
   productSearchQuery = model('');
 
@@ -1160,7 +1052,7 @@ export class Dashboard {
   readonly availabilityOptions = AVAILABILITY_OPTIONS;
 
   customerSelectOptions = computed<SelectOption[]>(() => {
-    const head: SelectOption[] = [{ label: '— Selecione —', value: '' }];
+    const head: SelectOption[] = [{ label: 'Selecione', value: '' }];
     return head.concat(this.customers().map((c) => ({ label: c.name, value: c.id })));
   });
 
@@ -1432,34 +1324,6 @@ export class Dashboard {
     this.dateFilter.set('');
     this.customerSearchQuery.set('');
     this.productSearchQuery.set('');
-  }
-
-  onOrdersDateFilterChange(value: Date | string | null) {
-    this.dateFilter.set(formatLocalDateToIso(value instanceof Date ? value : null));
-  }
-
-  clearOrdersDateFilter(dp: MatDatepicker<Date>) {
-    this.dateFilter.set('');
-    dp.close();
-  }
-
-  setOrdersDateFilterToday(dp: MatDatepicker<Date>) {
-    this.dateFilter.set(formatLocalDateToIso(new Date()));
-    dp.close();
-  }
-
-  onOrderModalDateChange(value: Date | string | null) {
-    this.orderDateStr.set(formatLocalDateToIso(value instanceof Date ? value : null));
-  }
-
-  clearOrderModalDate(dp: MatDatepicker<Date>) {
-    this.orderDateStr.set('');
-    dp.close();
-  }
-
-  setOrderModalDateToday(dp: MatDatepicker<Date>) {
-    this.orderDateStr.set(formatLocalDateToIso(new Date()));
-    dp.close();
   }
 
   saveOrder() {
