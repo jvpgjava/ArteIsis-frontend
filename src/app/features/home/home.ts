@@ -257,11 +257,13 @@ export class Home {
       error: (err) => {
         const st = err?.status;
         if (st === 503 || st === 502) {
-          this.contactFeedback.set('O envio por e-mail não está disponível neste servidor. Tenta mais tarde ou contacta-nos por outro canal.');
+          this.contactFeedback.set(
+            'O envio por e-mail não está disponível neste servidor. Tente mais tarde ou entre em contato por outro canal.',
+          );
         } else if (st === 400) {
-          this.contactFeedback.set('Dados inválidos. Verifica o formulário.');
+          this.contactFeedback.set('Dados inválidos. Verifique o formulário.');
         } else {
-          this.contactFeedback.set('Não foi possível enviar. Verifica a ligação à API.');
+          this.contactFeedback.set('Não foi possível enviar. Verifique a conexão com a API.');
         }
       },
       complete: () => this.contactSending.set(false),

@@ -76,7 +76,7 @@ const ORDER_STATUS_OPTIONS: SelectOption[] = [
   { label: 'Concluído', value: 'Concluído' },
 ];
 
-/** Filtro da listagem de pedidos (mesmo `app-select` do contacto). */
+/** Filtro da listagem de pedidos (mesmo `app-select` do contato). */
 const ORDER_STATUS_FILTER_OPTIONS: SelectOption[] = [
   { label: 'Status: Todos', value: '' },
   { label: 'Pendente', value: 'Pendente' },
