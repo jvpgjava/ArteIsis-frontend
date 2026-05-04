@@ -104,7 +104,8 @@ const CATEGORY_OPTIONS = ['Camisetas', 'Moletons', 'Escolar', 'Uniformes', 'Esta
               <div class="relative flex-1 md:w-80 group">
                 <input
                   type="text"
-                  [(ngModel)]="searchQuery"
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="searchQuery.set($event)"
                   placeholder="Buscar produtos..."
                   class="w-full bg-white border border-isis-blue/10 p-4 pl-12 rounded-2xl focus:outline-none focus:border-isis-blue/40 transition-colors shadow-sm"
                 />
@@ -148,7 +149,8 @@ export class ProductList {
 
   readonly categoryOptions = CATEGORY_OPTIONS;
 
-  searchQuery = model('');
+  /** `signal` + `ngModelChange`: `[(ngModel)]` com `model()` não atualizava o valor ao digitar. */
+  searchQuery = signal('');
   availabilityFilter = model('');
   selectedCategories = signal<string[]>([]);
 
