@@ -687,48 +687,50 @@ function mapOrder(r: OrderApiRow): Order {
         }
 
         @if (showOrderForm()) {
-          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-isis-dark/40 backdrop-blur-sm animate-fade-in">
-            <div class="bg-white w-full max-w-lg p-10 rounded-3xl shadow-2xl space-y-8 animate-scale-in">
-              <div class="flex justify-between items-center">
-                <h3 class="text-2xl font-display text-isis-blue">{{ selectedOrder() ? 'EDITAR PEDIDO' : 'NOVO PEDIDO' }}</h3>
-                <button (click)="closeModals()" class="text-isis-dark/40 hover:text-isis-rose transition-colors">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-              <div class="flex flex-col gap-8">
-                <app-select
-                  label="Cliente"
-                  placeholder="Selecione"
-                  [options]="customerSelectOptions()"
-                  [(value)]="orderCustomerId"
-                />
-                <app-input label="Descrição do pedido" placeholder="Ex: 10 Camisetas algodão" [(value)]="orderDescription" />
-                <app-select
-                  label="Status do pedido"
-                  [options]="orderStatusOptions"
-                  [(value)]="orderStatus"
-                />
-                <div class="grid grid-cols-2 gap-4">
-                  <app-input label="Quantidade" type="text" placeholder="1" mask="order-qty" [(value)]="orderQuantityStr" />
-                  <app-input label="Valor total" type="text" placeholder="R$ 0,00" mask="currency-brl" [(value)]="orderTotalStr" />
+          <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain p-4 py-8 sm:items-center sm:py-10 bg-isis-dark/40 backdrop-blur-sm animate-fade-in">
+            <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col min-h-0">
+              <div class="max-h-[min(90vh,44rem)] overflow-y-auto overflow-x-hidden flex flex-col min-h-0 p-8 sm:p-10">
+                <div class="flex shrink-0 justify-between items-center gap-4 pb-6 border-b border-isis-blue/5">
+                  <h3 class="text-2xl font-display text-isis-blue">{{ selectedOrder() ? 'EDITAR PEDIDO' : 'NOVO PEDIDO' }}</h3>
+                  <button type="button" (click)="closeModals()" class="shrink-0 text-isis-dark/40 hover:text-isis-rose transition-colors">
+                    <mat-icon>close</mat-icon>
+                  </button>
                 </div>
-                <div class="flex w-full flex-col gap-1.5">
-                  <label for="order-date-field" class="text-xs font-bold uppercase tracking-wider text-isis-dark/50 px-1">
-                    Data do pedido
-                  </label>
-                  <input
-                    id="order-date-field"
-                    type="date"
-                    min="2000-01-01"
-                    max="2099-12-31"
-                    [ngModel]="orderDateStr()"
-                    (ngModelChange)="orderDateStr.set($event)"
-                    class="font-sans h-[3.25rem] w-full min-w-0 rounded-xl border border-isis-blue/15 bg-white px-3 text-sm font-semibold text-isis-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-isis-blue/20 [color-scheme:light]"
+                <div class="flex flex-col gap-6 pt-6">
+                  <app-select
+                    label="Cliente"
+                    placeholder="Selecione"
+                    [options]="customerSelectOptions()"
+                    [(value)]="orderCustomerId"
                   />
+                  <app-input label="Descrição do pedido" placeholder="Ex: 10 Camisetas algodão" [(value)]="orderDescription" />
+                  <app-select
+                    label="Status do pedido"
+                    [options]="orderStatusOptions"
+                    [(value)]="orderStatus"
+                  />
+                  <div class="grid grid-cols-2 gap-4">
+                    <app-input label="Quantidade" type="text" placeholder="1" mask="order-qty" [(value)]="orderQuantityStr" />
+                    <app-input label="Valor total" type="text" placeholder="R$ 0,00" mask="currency-brl" [(value)]="orderTotalStr" />
+                  </div>
+                  <div class="flex w-full flex-col gap-1.5">
+                    <label for="order-date-field" class="text-xs font-bold uppercase tracking-wider text-isis-dark/50 px-1">
+                      Data do pedido
+                    </label>
+                    <input
+                      id="order-date-field"
+                      type="date"
+                      min="2000-01-01"
+                      max="2099-12-31"
+                      [ngModel]="orderDateStr()"
+                      (ngModelChange)="orderDateStr.set($event)"
+                      class="font-sans h-[3.25rem] w-full min-w-0 rounded-xl border border-isis-blue/15 bg-white px-3 text-sm font-semibold text-isis-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-isis-blue/20 [color-scheme:light]"
+                    />
+                  </div>
+                  <app-button class="w-full shrink-0 pb-1 pt-2" (click)="saveOrder()">
+                    {{ selectedOrder() ? 'Salvar alterações' : 'Criar pedido' }}
+                  </app-button>
                 </div>
-                <app-button class="w-full mt-2" (click)="saveOrder()">
-                  {{ selectedOrder() ? 'Salvar alterações' : 'Criar pedido' }}
-                </app-button>
               </div>
             </div>
           </div>
