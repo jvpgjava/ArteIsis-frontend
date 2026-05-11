@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="flex flex-col gap-10 md:flex-row md:items-start md:justify-between md:gap-8">
           <div class="flex max-w-md flex-col gap-6 md:max-w-lg">
             <div class="w-48 md:w-56">
-              <img src="/Logo1-ArteIsis.png" alt="Logo Arte Isis" class="h-auto w-full object-contain" />
+              <img src="/Logo3-ArteIsis.png" alt="Logo Arte Isis" class="h-auto w-full object-contain" />
             </div>
             <p class="max-w-md text-sm leading-relaxed text-isis-light/60">
               Transformando suas ideias em artes únicas através da serigrafia de alta qualidade. Muito mais do que uma estampa.
