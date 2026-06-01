@@ -17,8 +17,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       <div class="relative z-10 text-center max-w-5xl animate-fade-in-up">
         <h1 class="text-5xl md:text-7xl lg:text-8xl text-white font-display tracking-tight leading-[0.95] mb-8 drop-shadow-sm">
           Muito mais do que <br>
-          <span class="text-white/80">uma estampa, é a sua</span> <br>
-          <span class="italic underline decoration-isis-rose underline-offset-8">ideia transformada</span> <br>
+          <span class="italic underline text-white/90">uma estampa, é sua ideia</span> <br>
+          <span class="decoration-isis-rose underline-offset-8">transformada</span> <br>
           em arte!
         </h1>
         <p class="text-white text-lg md:text-2xl font-light max-w-2xl mx-auto opacity-90 leading-relaxed font-sans pb-8">
