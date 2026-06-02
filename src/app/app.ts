@@ -3,11 +3,12 @@ import {RouterOutlet} from '@angular/router';
 import {Header} from './components/layout/header';
 import {Footer} from './components/layout/footer';
 import {UiMessageModal} from './components/ui/ui-message-modal';
+import {CartSidebar} from './components/cart/cart-sidebar';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
-  imports: [RouterOutlet, Header, Footer, UiMessageModal],
+  imports: [RouterOutlet, Header, Footer, UiMessageModal, CartSidebar],
   template: `
     <app-header />
     <main class="min-h-screen">
@@ -15,6 +16,7 @@ import {UiMessageModal} from './components/ui/ui-message-modal';
     </main>
     <app-footer />
     <app-ui-message-modal />
+    <app-cart-sidebar />
   `,
   styles: [`
     :host {

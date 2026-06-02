@@ -13,6 +13,7 @@ import { catchError, map, of, switchMap } from 'rxjs';
 import { ArteIsisApiService, CatalogProductApiRow, ProductColorVariantApiRow } from '../../core/arteisis-api.service';
 import { resolvePublicMediaUrl } from '../../core/media-url';
 import { CATALOG_IMAGE_PLACEHOLDER } from '../home/featured-products';
+import { CartService } from '../../core/cart.service';
 
 const GARMENT_CATEGORIES = new Set(['Camisetas', 'Moletons', 'Uniformes', 'Infantil']);
 const BR_SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG'] as const;
@@ -146,13 +147,19 @@ function sortSizes(sizes: string[]): string[] {
                 </div>
               }
 
-              <a
-                routerLink="/"
-                fragment="contato"
-                class="mt-10 block w-full border border-isis-blue/20 bg-isis-blue py-4 text-center text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 transition-colors hover:bg-isis-blue/90 hover:text-white"
-              >
-                Encomendar
-              </a>
+              @if (addedToCart()) {
+                <div class="mt-10 flex items-center justify-center gap-2 w-full border border-green-500/30 bg-green-50 py-4 text-sm font-bold uppercase tracking-widest text-green-700">
+                  ✓ Adicionado ao carrinho
+                </div>
+              } @else {
+                <button
+                  type="button"
+                  (click)="addToCart()"
+                  class="mt-10 block w-full border border-isis-blue/20 bg-isis-blue py-4 text-center text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 transition-colors hover:bg-isis-blue/90"
+                >
+                  Adicionar ao Carrinho
+                </button>
+              }
             </div>
           </div>
         } @else {
@@ -166,6 +173,7 @@ function sortSizes(sizes: string[]): string[] {
 export class ProductDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ArteIsisApiService);
+  private readonly cart = inject(CartService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly thumbFocus = THUMB_FOCUS;
@@ -174,6 +182,7 @@ export class ProductDetail {
   activeThumb = signal(0);
   selectedSize = signal<string | null>(null);
   selectedColor = signal('#1a1a1a');
+  addedToCart = signal(false);
 
   row = signal<CatalogProductApiRow | null>(null);
   error = signal('');
@@ -239,6 +248,14 @@ export class ProductDetail {
         const firstHex = cols.find((c) => c.available)?.hex ?? cols[0]?.hex ?? '#1a1a1a';
         this.selectedColor.set(firstHex);
       });
+  }
+
+  addToCart(): void {
+    const p = this.row();
+    if (!p) return;
+    this.cart.addItem(p, 1, this.selectedSize(), this.selectedColor());
+    this.addedToCart.set(true);
+    setTimeout(() => this.addedToCart.set(false), 2500);
   }
 
   isSizeAvailable(size: string): boolean {

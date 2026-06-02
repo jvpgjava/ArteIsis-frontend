@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { CartService } from '../../core/cart.service';
 
 @Component({
   selector: 'app-header',
@@ -55,6 +56,21 @@ import { AuthService } from '../../core/auth.service';
             <mat-icon class="text-isis-blue group-hover:text-isis-rose transition-colors">person_outline</mat-icon>
           </button>
         }
+        @if (isCustomer()) {
+          <button
+            type="button"
+            (click)="openCart()"
+            class="relative p-2 hover:bg-isis-light rounded-full transition-all hover:scale-110 active:scale-95 group"
+            aria-label="Abrir carrinho"
+          >
+            <mat-icon class="text-isis-dark/60 group-hover:text-isis-rose transition-colors">shopping_bag</mat-icon>
+            @if (cartCount() > 0) {
+              <span class="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-isis-rose text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                {{ cartCount() }}
+              </span>
+            }
+          </button>
+        }
       </div>
     </header>
   `,
@@ -85,9 +101,12 @@ import { AuthService } from '../../core/auth.service';
 export class Header {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly cart = inject(CartService);
 
   readonly isAdmin = computed(() => this.auth.user()?.role === 'ADMIN');
   readonly isLoggedIn = computed(() => !!this.auth.user());
+  readonly isCustomer = computed(() => this.auth.user()?.role === 'CUSTOMER');
+  readonly cartCount = computed(() => this.cart.itemCount());
 
   scrollTo(id: string) {
     const path = this.router.url.split(/[?#]/)[0];
@@ -117,6 +136,10 @@ export class Header {
       top: offsetPosition,
       behavior: 'smooth',
     });
+  }
+
+  openCart(): void {
+    this.cart.openSidebar();
   }
 
   logout() {

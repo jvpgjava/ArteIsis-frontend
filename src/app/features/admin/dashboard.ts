@@ -33,6 +33,7 @@ interface Order {
   customerId: string;
   customer: string;
   product: string;
+  colors: string[];
   date: Date;
   status: 'Pendente' | 'Produção' | 'Concluído';
   total: number;
@@ -254,6 +255,7 @@ function mapOrder(r: OrderApiRow): Order {
     customerId: r.customerId,
     customer: r.customerName,
     product: r.productSummary,
+    colors: r.colors ?? [],
     date: parseApiLocalDate(r.date as unknown),
     status: r.status as Order['status'],
     total: parseOrderTotalFromApiRow(r),
@@ -346,18 +348,11 @@ function mapOrder(r: OrderApiRow): Order {
                     <tr>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cliente</th>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Produto</th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cor</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Data</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Status</th>
-                      <th
-                        class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-isis-dark/55 min-w-[8rem] whitespace-nowrap"
-                      >
-                        Valor
-                      </th>
-                      <th
-                        class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-isis-dark/55 min-w-[7.5rem] whitespace-nowrap"
-                      >
-                        Ações
-                      </th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Valor</th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -365,19 +360,31 @@ function mapOrder(r: OrderApiRow): Order {
                       <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
                         <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ order.customer }}</td>
                         <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ order.product }}</td>
-                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums">
+                        <td class="px-6 py-5 align-middle text-center">
+                          <div class="flex flex-wrap justify-center gap-1.5">
+                            @for (hex of order.colors; track hex) {
+                              <span
+                                class="inline-block w-5 h-5 rounded-sm border border-isis-dark/20 shadow-sm"
+                                [style.background]="hex"
+                                [title]="hex"
+                              ></span>
+                            }
+                            @if (order.colors.length === 0) {
+                              <span class="text-xs text-isis-dark/25">—</span>
+                            }
+                          </div>
+                        </td>
+                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums whitespace-nowrap">
                           {{ order.date | date: 'dd/MM/yyyy' }}
                         </td>
                         <td class="px-6 py-5 align-middle text-center">
                           <span class="text-sm font-semibold uppercase tracking-wide text-isis-blue">{{ order.status }}</span>
                         </td>
-                        <td
-                          class="px-6 py-5 align-middle text-right text-sm font-semibold text-isis-blue tabular-nums min-w-[8rem] whitespace-nowrap"
-                        >
+                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums whitespace-nowrap">
                           {{ formatOrderBrl(order.total) }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-right whitespace-nowrap shrink-0 min-w-[7.5rem]">
-                          <div class="inline-flex items-center justify-end gap-1">
+                        <td class="px-6 py-5 align-middle text-center whitespace-nowrap">
+                          <div class="inline-flex items-center justify-center gap-1">
                             <button
                               type="button"
                               (click)="openOrderModal(order)"
@@ -400,7 +407,7 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (orders().length === 0) {
                       <tr>
-                        <td colspan="6" class="p-24 text-center">
+                        <td colspan="7" class="p-24 text-center">
                           <div class="flex flex-col items-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">manage_search</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum pedido encontrado</p>
@@ -451,7 +458,7 @@ function mapOrder(r: OrderApiRow): Order {
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cliente</th>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Contato</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Histórico</th>
-                      <th class="px-6 py-4 w-24 min-w-[5.5rem]" aria-hidden="true"></th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -473,8 +480,8 @@ function mapOrder(r: OrderApiRow): Order {
                             {{ customer.orders }} {{ customer.orders === 1 ? 'PEDIDO' : 'PEDIDOS' }}
                           </button>
                         </td>
-                        <td class="px-6 py-5 align-middle text-right">
-                          <div class="inline-flex items-center justify-end gap-0.5">
+                        <td class="px-6 py-5 align-middle text-center">
+                          <div class="inline-flex items-center justify-center gap-0.5">
                             <button
                               type="button"
                               (click)="openCustomerModal(customer)"
@@ -547,8 +554,8 @@ function mapOrder(r: OrderApiRow): Order {
                     <tr>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Produto</th>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Categoria</th>
-                      <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-isis-dark/55">Valor</th>
-                      <th class="px-6 py-4 w-24 min-w-[5.5rem]" aria-hidden="true"></th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Valor</th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -558,11 +565,11 @@ function mapOrder(r: OrderApiRow): Order {
                         <td class="px-6 py-5 align-middle text-left text-sm font-semibold uppercase tracking-wide text-isis-blue">
                           {{ product.category }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-right text-sm font-semibold text-isis-blue tabular-nums">
+                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums">
                           {{ product.price | currency: 'BRL' }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-right">
-                          <div class="inline-flex items-center justify-end gap-0.5">
+                        <td class="px-6 py-5 align-middle text-center">
+                          <div class="inline-flex items-center justify-center gap-0.5">
                             <button
                               type="button"
                               (click)="openProductModal(product)"
@@ -627,7 +634,7 @@ function mapOrder(r: OrderApiRow): Order {
                       <th class="px-6 py-4 w-24 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Imagem</th>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Título</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Ativo</th>
-                      <th class="px-6 py-4 w-24 min-w-[5.5rem]" aria-hidden="true"></th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -647,8 +654,8 @@ function mapOrder(r: OrderApiRow): Order {
                             {{ row.active ? 'Sim' : 'Não' }}
                           </span>
                         </td>
-                        <td class="px-6 py-5 align-middle text-right whitespace-nowrap">
-                          <div class="inline-flex items-center justify-end gap-0.5">
+                        <td class="px-6 py-5 align-middle text-center whitespace-nowrap">
+                          <div class="inline-flex items-center justify-center gap-0.5">
                             <button
                               type="button"
                               (click)="openPortfolioModal(row)"
@@ -704,6 +711,32 @@ function mapOrder(r: OrderApiRow): Order {
                     [(value)]="orderCustomerId"
                   />
                   <app-input label="Descrição do pedido" placeholder="Ex: 10 Camisetas algodão" [(value)]="orderDescription" />
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold uppercase tracking-wider text-isis-dark/50 px-1">
+                      Cor do produto
+                    </label>
+                    <div class="flex items-center gap-3 h-[3.25rem] rounded-xl border border-isis-blue/15 bg-white px-4 shadow-sm">
+                      <input
+                        type="color"
+                        [value]="orderColor() || '#000000'"
+                        (input)="orderColor.set($any($event.target).value)"
+                        class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent p-0"
+                        aria-label="Selecionar cor"
+                      />
+                      <span class="text-sm font-semibold text-isis-dark font-mono">
+                        {{ orderColor() || 'Nenhuma' }}
+                      </span>
+                      @if (orderColor()) {
+                        <button
+                          type="button"
+                          (click)="orderColor.set('')"
+                          class="ml-auto text-xs text-isis-dark/30 hover:text-isis-rose transition-colors"
+                        >
+                          Remover
+                        </button>
+                      }
+                    </div>
+                  </div>
                   <app-select
                     label="Status do pedido"
                     [options]="orderStatusOptions"
@@ -1018,6 +1051,7 @@ export class Dashboard {
 
   orderCustomerId = model('');
   orderDescription = model('');
+  orderColor = model('');
   orderStatus = model('Pendente');
   orderQuantityStr = model('1');
   orderTotalStr = model('R$ 0,00');
@@ -1137,6 +1171,7 @@ export class Dashboard {
     if (order) {
       this.orderCustomerId.set(order.customerId);
       this.orderDescription.set(order.product);
+      this.orderColor.set(order.colors[0] ?? '');
       this.orderStatus.set(order.status);
       this.orderQuantityStr.set('1');
       this.orderTotalStr.set(formatBrlCurrencyFromNumber(order.total));
@@ -1144,6 +1179,7 @@ export class Dashboard {
     } else {
       this.orderCustomerId.set('');
       this.orderDescription.set('');
+      this.orderColor.set('');
       this.orderStatus.set('Pendente');
       this.orderQuantityStr.set('1');
       this.orderTotalStr.set('R$ 0,00');
@@ -1347,7 +1383,7 @@ export class Dashboard {
       customerId: cid,
       status: String(this.orderStatus() ?? 'Pendente'),
       orderDate: this.orderDateStr().trim() || new Date().toISOString().slice(0, 10),
-      lines: [{ description: desc, quantity: qty, unitPrice: unit }],
+      lines: [{ description: desc, quantity: qty, unitPrice: unit, selectedColor: this.orderColor().trim() || null }],
     };
     const sel = this.selectedOrder();
     const req$ = sel ? this.api.updateOrder(sel.id, body) : this.api.createOrder(body);

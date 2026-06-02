@@ -10,6 +10,7 @@ export interface OrderApiRow {
   productSummary: string;
   date: string;
   status: string;
+  colors?: string[];
   /** Total em R$ (camelCase habitual). */
   total?: number | string | null;
   /** Alguns proxies/backends enviam o montante com este nome. */
@@ -63,7 +64,14 @@ export interface OrderWriteBody {
   customerId: string;
   status?: string | null;
   orderDate: string;
-  lines: { productId?: string | null; description: string; quantity: number; unitPrice: number }[];
+  lines: { productId?: string | null; description: string; quantity: number; unitPrice: number; selectedColor?: string | null }[];
+}
+
+export interface PublicOrderBody {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  lines: { productId?: string | null; description: string; quantity: number; unitPrice: number; selectedColor?: string | null }[];
 }
 
 export interface TokenResponse {
@@ -248,5 +256,9 @@ export class ArteIsisApiService {
 
   submitContact(body: { name: string; email: string; subject: string; message: string }): Observable<void> {
     return this.http.post(`${this.base}/api/public/contact`, body, { responseType: 'text' }).pipe(map(() => undefined));
+  }
+
+  submitPublicOrder(body: PublicOrderBody): Observable<OrderApiRow> {
+    return this.http.post<OrderApiRow>(`${this.base}/api/public/orders`, body);
   }
 }

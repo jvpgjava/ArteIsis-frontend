@@ -5,6 +5,7 @@ import {Register} from './features/auth/register';
 import {ProductList} from './features/products/product-list';
 import {ProductDetail} from './features/products/product-detail';
 import {Dashboard} from './features/admin/dashboard';
+import {Checkout} from './features/checkout/checkout';
 import {adminGuard} from './core/admin.guard';
 
 export const routes: Routes = [
@@ -27,6 +28,10 @@ export const routes: Routes = [
   {
     path: 'products/:id',
     component: ProductDetail,
+  },
+  {
+    path: 'checkout',
+    component: Checkout,
   },
   {
     path: 'admin',
