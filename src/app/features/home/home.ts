@@ -142,6 +142,8 @@ const NOSSOS_PRODUTOS_LINKS: { category: string; image: string }[] = [
           <app-input label="Nome" placeholder="Seu nome completo" [(value)]="contactName" [errorText]="errContactName()" />
           <app-input label="E-mail" type="email" placeholder="seu@email.com" mask="email" [(value)]="contactEmail" [errorText]="errContactEmail()" />
 
+          <app-input label="Telefone / WhatsApp" placeholder="(00) 00000-0000" mask="phone-br" [(value)]="contactPhone" class="md:col-span-2" />
+
           <app-select label="Assunto" class="md:col-span-2" [options]="contactSubjectOptions" [(value)]="contactSubject" />
 
           <app-textarea
@@ -200,6 +202,7 @@ export class Home {
 
   contactName = model('');
   contactEmail = model('');
+  contactPhone = model('');
   contactSubject = model('uniformes');
   contactMessage = model('');
 
@@ -245,11 +248,13 @@ export class Home {
     }
 
     this.contactSending.set(true);
-    this.api.submitContact({ name, email, subject, message }).subscribe({
+    const phone = String(this.contactPhone() ?? '').trim() || null;
+    this.api.submitContact({ name, email, phone, subject, message }).subscribe({
       next: () => {
         this.contactFeedback.set(null);
         this.contactName.set('');
         this.contactEmail.set('');
+        this.contactPhone.set('');
         this.contactSubject.set('uniformes');
         this.contactMessage.set('');
         this.contactThanksOpen.set(true);

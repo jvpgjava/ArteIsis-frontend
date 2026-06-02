@@ -7,6 +7,7 @@ import {ProductDetail} from './features/products/product-detail';
 import {Dashboard} from './features/admin/dashboard';
 import {Checkout} from './features/checkout/checkout';
 import {adminGuard} from './core/admin.guard';
+import {customerGuard} from './core/customer.guard';
 
 export const routes: Routes = [
   {
@@ -32,6 +33,7 @@ export const routes: Routes = [
   {
     path: 'checkout',
     component: Checkout,
+    canActivate: [customerGuard],
   },
   {
     path: 'admin',

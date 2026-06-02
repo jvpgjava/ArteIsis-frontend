@@ -254,7 +254,7 @@ export class ArteIsisApiService {
     return this.http.get<AuthMeResponse>(`${this.base}/api/auth/me`);
   }
 
-  submitContact(body: { name: string; email: string; subject: string; message: string }): Observable<void> {
+  submitContact(body: { name: string; email: string; phone?: string | null; subject: string; message: string }): Observable<void> {
     return this.http.post(`${this.base}/api/public/contact`, body, { responseType: 'text' }).pipe(map(() => undefined));
   }
 
