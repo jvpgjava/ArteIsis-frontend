@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { ArteIsisApiService, CatalogProductApiRow, ProductColorVariantApiRow } from '../../core/arteisis-api.service';
@@ -162,6 +162,11 @@ function sortSizes(sizes: string[]): string[] {
                     Adicionar ao Carrinho
                   </button>
                 }
+                @if (loginPrompt()) {
+                  <p class="mt-3 text-center text-xs text-isis-rose font-semibold animate-pulse">
+                    Faça login para adicionar ao carrinho. Redirecionando…
+                  </p>
+                }
               }
             </div>
           </div>
@@ -175,6 +180,7 @@ function sortSizes(sizes: string[]): string[] {
 })
 export class ProductDetail {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly api = inject(ArteIsisApiService);
   private readonly cart = inject(CartService);
   private readonly auth = inject(AuthService);
@@ -189,6 +195,7 @@ export class ProductDetail {
   selectedSize = signal<string | null>(null);
   selectedColor = signal('#1a1a1a');
   addedToCart = signal(false);
+  loginPrompt = signal(false);
 
   row = signal<CatalogProductApiRow | null>(null);
   error = signal('');
@@ -259,6 +266,17 @@ export class ProductDetail {
   addToCart(): void {
     const p = this.row();
     if (!p) return;
+
+    if (this.auth.user()?.role !== 'CUSTOMER') {
+      this.loginPrompt.set(true);
+      setTimeout(() => {
+        void this.router.navigate(['/auth/login'], {
+          queryParams: { returnUrl: this.router.url },
+        });
+      }, 1500);
+      return;
+    }
+
     this.cart.addItem(p, 1, this.selectedSize(), this.selectedColor());
     this.addedToCart.set(true);
     setTimeout(() => this.addedToCart.set(false), 2500);
