@@ -14,6 +14,7 @@ import { ArteIsisApiService, CatalogProductApiRow, ProductColorVariantApiRow } f
 import { resolvePublicMediaUrl } from '../../core/media-url';
 import { CATALOG_IMAGE_PLACEHOLDER } from '../home/featured-products';
 import { CartService } from '../../core/cart.service';
+import { AuthService } from '../../core/auth.service';
 
 const GARMENT_CATEGORIES = new Set(['Camisetas', 'Moletons', 'Uniformes', 'Infantil']);
 const BR_SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG'] as const;
@@ -147,18 +148,20 @@ function sortSizes(sizes: string[]): string[] {
                 </div>
               }
 
-              @if (addedToCart()) {
-                <div class="mt-10 flex items-center justify-center gap-2 w-full border border-green-500/30 bg-green-50 py-4 text-sm font-bold uppercase tracking-widest text-green-700">
-                  ✓ Adicionado ao carrinho
-                </div>
-              } @else {
-                <button
-                  type="button"
-                  (click)="addToCart()"
-                  class="mt-10 block w-full border border-isis-blue/20 bg-isis-blue py-4 text-center text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 transition-colors hover:bg-isis-blue/90"
-                >
-                  Adicionar ao Carrinho
-                </button>
+              @if (!isAdmin()) {
+                @if (addedToCart()) {
+                  <div class="mt-10 flex items-center justify-center gap-2 w-full border border-green-500/30 bg-green-50 py-4 text-sm font-bold uppercase tracking-widest text-green-700">
+                    ✓ Adicionado ao carrinho
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="addToCart()"
+                    class="mt-10 block w-full border border-isis-blue/20 bg-isis-blue py-4 text-center text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 transition-colors hover:bg-isis-blue/90"
+                  >
+                    Adicionar ao Carrinho
+                  </button>
+                }
               }
             </div>
           </div>
@@ -174,7 +177,10 @@ export class ProductDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ArteIsisApiService);
   private readonly cart = inject(CartService);
+  private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly isAdmin = computed(() => this.auth.user()?.role === 'ADMIN');
 
   readonly thumbFocus = THUMB_FOCUS;
   readonly thumbIndices = [0, 1, 2, 3, 4] as const;
