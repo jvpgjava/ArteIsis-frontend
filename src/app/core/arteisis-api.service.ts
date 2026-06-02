@@ -68,9 +68,6 @@ export interface OrderWriteBody {
 }
 
 export interface PublicOrderBody {
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
   lines: { productId?: string | null; description: string; quantity: number; unitPrice: number; selectedColor?: string | null }[];
 }
 

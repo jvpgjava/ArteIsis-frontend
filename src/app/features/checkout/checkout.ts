@@ -1,21 +1,20 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   inject,
   signal,
 } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { CartService } from '../../core/cart.service';
+import { AuthService } from '../../core/auth.service';
 import { ArteIsisApiService } from '../../core/arteisis-api.service';
 import { resolvePublicMediaUrl } from '../../core/media-url';
 
 @Component({
   selector: 'app-checkout',
-  imports: [CommonModule, CurrencyPipe, FormsModule, RouterLink, MatIconModule],
+  imports: [CommonModule, CurrencyPipe, RouterLink, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-[#f5f3f0] text-isis-dark">
@@ -33,7 +32,6 @@ import { resolvePublicMediaUrl } from '../../core/media-url';
         </h1>
 
         @if (success()) {
-          <!-- Confirmação -->
           <div class="max-w-lg mx-auto text-center py-20 flex flex-col items-center gap-6">
             <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -53,83 +51,37 @@ import { resolvePublicMediaUrl } from '../../core/media-url';
             </a>
           </div>
         } @else if (cart.items().length === 0) {
-          <!-- Carrinho vazio -->
           <div class="text-center py-20 flex flex-col items-center gap-4">
             <mat-icon class="text-isis-dark/20 !text-5xl">shopping_bag</mat-icon>
             <p class="text-sm text-isis-dark/40">Seu carrinho está vazio.</p>
-            <a
-              routerLink="/products"
-              class="text-xs font-bold uppercase tracking-widest text-isis-blue hover:underline"
-            >
+            <a routerLink="/products" class="text-xs font-bold uppercase tracking-widest text-isis-blue hover:underline">
               Ver produtos
             </a>
           </div>
         } @else {
           <div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-start">
 
-            <!-- Formulário do cliente -->
+            <!-- Confirmação -->
             <div class="bg-white border border-isis-blue/10 p-8 shadow-sm">
               <h2 class="text-xs font-bold uppercase tracking-widest text-isis-dark/50 mb-6">
-                Seus dados para contato
+                Confirmar pedido
               </h2>
 
-              <div class="space-y-5">
-                <div>
-                  <label class="block text-xs uppercase tracking-widest text-isis-dark/50 mb-2">
-                    Nome completo *
-                  </label>
-                  <input
-                    type="text"
-                    [(ngModel)]="customerName"
-                    placeholder="Seu nome"
-                    class="w-full border border-isis-blue/20 bg-[#f5f3f0] px-4 py-3 text-sm text-isis-dark placeholder:text-isis-dark/30 focus:outline-none focus:border-isis-blue transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-xs uppercase tracking-widest text-isis-dark/50 mb-2">
-                    E-mail *
-                  </label>
-                  <input
-                    type="email"
-                    [(ngModel)]="customerEmail"
-                    (blur)="emailTouched.set(true)"
-                    placeholder="seu@email.com"
-                    class="w-full border bg-[#f5f3f0] px-4 py-3 text-sm text-isis-dark placeholder:text-isis-dark/30 focus:outline-none transition-colors"
-                    [class.border-red-400]="emailTouched() && !emailValid()"
-                    [class.border-isis-blue/20]="!emailTouched() || emailValid()"
-                    [class.focus:border-red-400]="emailTouched() && !emailValid()"
-                    [class.focus:border-isis-blue]="!emailTouched() || emailValid()"
-                  />
-                  @if (emailTouched() && !emailValid()) {
-                    <p class="mt-1 text-[10px] text-red-500">Informe um e-mail válido.</p>
-                  }
-                </div>
-
-                <div>
-                  <label class="block text-xs uppercase tracking-widest text-isis-dark/50 mb-2">
-                    Telefone / WhatsApp *
-                  </label>
-                  <input
-                    type="tel"
-                    [value]="customerPhone"
-                    (input)="formatPhone($event)"
-                    placeholder="(00) 00000-0000"
-                    maxlength="15"
-                    class="w-full border border-isis-blue/20 bg-[#f5f3f0] px-4 py-3 text-sm text-isis-dark placeholder:text-isis-dark/30 focus:outline-none focus:border-isis-blue transition-colors"
-                  />
-                </div>
+              <!-- Info do cliente logado -->
+              <div class="flex flex-col gap-1 p-4 bg-isis-light/50 rounded-xl border border-isis-blue/10 mb-8">
+                <p class="text-xs uppercase tracking-widest text-isis-dark/40 mb-1">Pedido em nome de</p>
+                <p class="text-sm font-bold text-isis-dark">{{ auth.user()?.email }}</p>
               </div>
 
               @if (errorMsg()) {
-                <p class="mt-4 text-xs text-red-500">{{ errorMsg() }}</p>
+                <p class="mb-4 text-xs text-red-500">{{ errorMsg() }}</p>
               }
 
               <button
                 type="button"
                 (click)="submit()"
                 [disabled]="submitting()"
-                class="mt-8 w-full bg-isis-blue py-4 text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 hover:bg-isis-blue/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full bg-isis-blue py-4 text-sm font-bold uppercase tracking-widest text-white shadow-md shadow-isis-blue/25 hover:bg-isis-blue/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {{ submitting() ? 'Enviando...' : 'Confirmar pedido' }}
               </button>
@@ -149,7 +101,6 @@ import { resolvePublicMediaUrl } from '../../core/media-url';
               <div class="space-y-4 divide-y divide-isis-blue/8">
                 @for (item of cart.items(); track $index) {
                   <div class="flex gap-3 pt-4 first:pt-0">
-                    <!-- Imagem pequena -->
                     <div class="w-14 h-14 shrink-0 bg-[#f5f3f0] border border-isis-blue/10 overflow-hidden">
                       @if (resolveImage(item.imageUrl); as img) {
                         <img [src]="img" [alt]="item.name" class="w-full h-full object-cover" />
@@ -196,30 +147,13 @@ import { resolvePublicMediaUrl } from '../../core/media-url';
 })
 export class Checkout {
   readonly cart = inject(CartService);
+  readonly auth = inject(AuthService);
   private readonly api = inject(ArteIsisApiService);
   private readonly router = inject(Router);
-
-  customerName = '';
-  customerEmail = '';
-  customerPhone = '';
 
   submitting = signal(false);
   success = signal(false);
   errorMsg = signal('');
-  emailTouched = signal(false);
-
-  readonly emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.customerEmail));
-
-  formatPhone(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    let digits = input.value.replace(/\D/g, '').slice(0, 11);
-    let formatted = '';
-    if (digits.length > 0) formatted = '(' + digits.slice(0, 2);
-    if (digits.length > 2) formatted += ') ' + digits.slice(2, 7);
-    if (digits.length > 7) formatted += '-' + digits.slice(7, 11);
-    input.value = formatted;
-    this.customerPhone = formatted;
-  }
 
   resolveImage(url: string | null): string | null {
     if (!url) return null;
@@ -228,20 +162,6 @@ export class Checkout {
 
   submit(): void {
     this.errorMsg.set('');
-
-    if (!this.customerName.trim()) {
-      this.errorMsg.set('Por favor, informe seu nome.');
-      return;
-    }
-    if (!this.customerEmail.trim() || !this.customerEmail.includes('@')) {
-      this.errorMsg.set('Por favor, informe um e-mail válido.');
-      return;
-    }
-    if (!this.customerPhone.trim()) {
-      this.errorMsg.set('Por favor, informe seu telefone.');
-      return;
-    }
-
     this.submitting.set(true);
 
     const lines = this.cart.items().map((item) => {
@@ -256,23 +176,16 @@ export class Checkout {
       };
     });
 
-    this.api
-      .submitPublicOrder({
-        customerName: this.customerName.trim(),
-        customerEmail: this.customerEmail.trim(),
-        customerPhone: this.customerPhone.trim(),
-        lines,
-      })
-      .subscribe({
-        next: () => {
-          this.cart.clear();
-          this.submitting.set(false);
-          this.success.set(true);
-        },
-        error: () => {
-          this.submitting.set(false);
-          this.errorMsg.set('Ocorreu um erro ao enviar o pedido. Tente novamente.');
-        },
-      });
+    this.api.submitPublicOrder({ lines }).subscribe({
+      next: () => {
+        this.cart.clear();
+        this.submitting.set(false);
+        this.success.set(true);
+      },
+      error: () => {
+        this.submitting.set(false);
+        this.errorMsg.set('Ocorreu um erro ao enviar o pedido. Tente novamente.');
+      },
+    });
   }
 }

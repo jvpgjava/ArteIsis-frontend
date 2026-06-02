@@ -1,6 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { CatalogProductApiRow } from './arteisis-api.service';
+import { AuthService } from './auth.service';
 
 export interface CartItem {
   productId: string;
@@ -17,6 +18,7 @@ const CART_KEY = 'arteisis_cart';
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly auth = inject(AuthService);
 
   readonly items = signal<CartItem[]>([]);
   readonly sidebarOpen = signal(false);
@@ -30,6 +32,17 @@ export class CartService {
     if (isPlatformBrowser(this.platformId)) {
       this.items.set(this.loadFromStorage());
     }
+
+    // Limpa o carrinho sempre que o usuário não for CUSTOMER (logout, admin, não logado)
+    effect(() => {
+      const user = this.auth.user();
+      if (user !== null && user?.role !== 'CUSTOMER') {
+        this.clear();
+      }
+      if (user === null) {
+        this.clear();
+      }
+    });
   }
 
   addItem(

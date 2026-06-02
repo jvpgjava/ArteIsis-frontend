@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-footer',
@@ -39,8 +40,8 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="flex shrink-0 flex-col gap-3 md:items-end md:text-right">
             <h4 class="mb-1 font-display text-sm uppercase tracking-widest text-isis-rose">Institucional</h4>
             <nav class="flex flex-col gap-3 text-sm text-isis-light/60 md:items-end">
-              <a href="#" class="transition-colors hover:text-white">Quem Somos</a>
-              <a href="#" class="transition-colors hover:text-white">Portfólio</a>
+              <button type="button" (click)="scrollTo('quem-somos')" class="transition-colors hover:text-white bg-transparent border-0 p-0 cursor-pointer text-sm text-isis-light/60 font-sans">Quem Somos</button>
+              <button type="button" (click)="scrollTo('portfolio')" class="transition-colors hover:text-white bg-transparent border-0 p-0 cursor-pointer text-sm text-isis-light/60 font-sans">Portfólio</button>
             </nav>
           </div>
         </div>
@@ -54,4 +55,28 @@ import { MatIconModule } from '@angular/material/icon';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Footer {}
+export class Footer {
+  private readonly router = inject(Router);
+
+  scrollTo(id: string): void {
+    const path = this.router.url.split(/[?#]/)[0];
+    const onHome = path === '' || path === '/';
+    if (onHome) {
+      const el = document.getElementById(id);
+      if (el) {
+        const offset = el.getBoundingClientRect().top + window.pageYOffset - 80;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
+        return;
+      }
+    }
+    void this.router.navigate(['/'], { fragment: id }).then(() => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          const offset = el.getBoundingClientRect().top + window.pageYOffset - 80;
+          window.scrollTo({ top: offset, behavior: 'smooth' });
+        }
+      }, 120);
+    });
+  }
+}
