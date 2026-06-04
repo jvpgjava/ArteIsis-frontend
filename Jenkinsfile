@@ -1,18 +1,16 @@
-// ArteIsis — deploy frontend (prod | hml)
+// ArteIsis frontend — branch master → prod | branch hml → homologação
 // Repo: https://github.com/jvpgjava/ArteIsis-frontend.git
+
+def deployEnv = (env.BRANCH_NAME == 'hml') ? 'hml' : 'prod'
+def deployDir = deployEnv == 'prod' ? '/var/www/arteisis/prod/frontend' : '/var/www/arteisis/hml/frontend'
+def ngConfig = deployEnv == 'prod' ? 'production' : 'hml'
 
 pipeline {
     agent any
 
-    parameters {
-        choice(name: 'ENV', choices: ['prod', 'hml'], description: 'Ambiente de deploy')
-    }
-
     environment {
         SSH_HOST = '72.61.47.148'
         SSH_USER = 'jgrando'
-        DEPLOY_DIR = "${params.ENV == 'prod' ? '/var/www/arteisis/prod/frontend' : '/var/www/arteisis/hml/frontend'}"
-        NG_CONFIG = "${params.ENV == 'prod' ? 'production' : 'hml'}"
     }
 
     stages {
@@ -24,8 +22,9 @@ pipeline {
 
         stage('Install & Build') {
             steps {
+                echo "Branch: ${env.BRANCH_NAME} → ambiente: ${deployEnv} (ng: ${ngConfig})"
                 sh 'npm install'
-                sh "npm run build -- --configuration=${NG_CONFIG}"
+                sh "npm run build -- --configuration=${ngConfig}"
             }
         }
 
@@ -33,7 +32,7 @@ pipeline {
             steps {
                 sh """
                     test -f dist/app/browser/index.html || { echo 'Build sem dist/app/browser/index.html'; exit 1; }
-                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=accept-new" dist/app/browser/ ${SSH_USER}@${SSH_HOST}:${DEPLOY_DIR}/
+                    rsync -avz --delete -e "ssh -o StrictHostKeyChecking=accept-new" dist/app/browser/ ${SSH_USER}@${SSH_HOST}:${deployDir}/
                 """
             }
         }
