@@ -82,13 +82,23 @@
               ]
             },
             "hml": {
+              "optimization": true,
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.hml.ts"
+                }
+              ]
+            },
+            "dev": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.hml.ts"
+                  "with": "src/environments/environment.dev.ts"
                 }
               ]
             }
@@ -109,6 +119,9 @@
             },
             "hml": {
               "buildTarget": "app:build:hml"
+            },
+            "dev": {
+              "buildTarget": "app:build:dev"
             }
           },
           "defaultConfiguration": "development"
