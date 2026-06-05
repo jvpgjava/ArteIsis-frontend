@@ -1,13 +1,10 @@
-// ArteIsis frontend — mesmo padrão Flowtix: deploy local na VPS (sem scp/ssh)
-// Branch master → prod | branch hml → homologação
+// ArteIsis frontend — Jenkins na mesma VPS
+// master → prod | hml → homolog
 // Repo: https://github.com/jvpgjava/ArteIsis-frontend.git
+// Setup VPS: ArteIsis-backend/docs/deploy/setup-jenkins-vps.sh
 
 pipeline {
     agent any
-
-    environment {
-        DEPLOY_USER = 'jgrando'
-    }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
@@ -20,6 +17,7 @@ pipeline {
             steps {
                 script {
                     def branchName = env.BRANCH_NAME ?: env.GIT_BRANCH?.replaceAll('origin/', '') ?: ''
+                    env.BRANCH_LABEL = branchName ?: 'desconhecida'
                     if (branchName == 'master') {
                         env.PROFILE      = 'prod'
                         env.DEPLOY_DIR   = '/var/www/arteisis/prod/frontend'
@@ -35,7 +33,7 @@ pipeline {
                         env.ENV_LABEL = 'N/A'
                     }
                 }
-                echo "Branch: ${env.BRANCH_NAME} → Ambiente: ${env.ENV_LABEL} (ng: ${env.NG_CONFIG})"
+                echo "Branch: ${env.BRANCH_LABEL} → ${env.ENV_LABEL} (ng: ${env.NG_CONFIG})"
             }
         }
 
@@ -65,9 +63,9 @@ pipeline {
                         error 'Build sem dist/app/browser/index.html'
                     }
                     sh """
-                        sudo mkdir -p ${env.DEPLOY_DIR}
-                        sudo rsync -av --delete dist/app/browser/ ${env.DEPLOY_DIR}/
-                        sudo chown -R ${DEPLOY_USER}:${DEPLOY_USER} ${env.DEPLOY_DIR}
+                        set -e
+                        mkdir -p ${env.DEPLOY_DIR}
+                        rsync -av --delete dist/app/browser/ ${env.DEPLOY_DIR}/
                     """
                 }
             }
