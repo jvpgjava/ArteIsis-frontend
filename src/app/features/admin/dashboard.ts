@@ -476,8 +476,8 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (orders().length === 0) {
                       <tr>
-                        <td colspan="7" class="p-24 text-center">
-                          <div class="flex flex-col items-center gap-3 text-isis-dark/20">
+                        <td colspan="7" class="p-24">
+                          <div class="flex w-full flex-col items-center justify-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">manage_search</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum pedido encontrado</p>
                           </div>
@@ -573,8 +573,8 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (customers().length === 0) {
                       <tr>
-                        <td [attr.colspan]="3" class="p-16 sm:p-24 text-center">
-                          <div class="flex flex-col items-center gap-3 text-isis-dark/20">
+                        <td colspan="4" class="p-16 sm:p-24">
+                          <div class="flex w-full flex-col items-center justify-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">person_search</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum cliente encontrado</p>
                           </div>
@@ -661,8 +661,8 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (products().length === 0) {
                       <tr>
-                        <td [attr.colspan]="3" class="p-16 sm:p-24 text-center">
-                          <div class="flex flex-col items-center gap-3 text-isis-dark/20">
+                        <td colspan="4" class="p-16 sm:p-24">
+                          <div class="flex w-full flex-col items-center justify-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">search_off</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum produto cadastrado</p>
                           </div>
@@ -747,8 +747,8 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (portfolioRows().length === 0) {
                       <tr>
-                        <td [attr.colspan]="3" class="p-16 sm:p-24 text-center">
-                          <div class="flex flex-col items-center gap-3 text-isis-dark/20">
+                        <td colspan="4" class="p-16 sm:p-24">
+                          <div class="flex w-full flex-col items-center justify-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">collections</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum item de portfólio</p>
                           </div>
