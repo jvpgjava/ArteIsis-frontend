@@ -35,13 +35,27 @@ import { Router } from '@angular/router';
                   />
                 </svg>
               </a>
+              <a
+                href="https://wa.me/5551985326489"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group flex items-center justify-center rounded-xl bg-white/5 p-3 transition-all duration-300 hover:bg-isis-rose"
+                aria-label="WhatsApp"
+              >
+                <img
+                  src="/whatsapp-logo.png"
+                  alt="WhatsApp"
+                  class="h-6 w-6 transition-transform group-hover:scale-110 opacity-100"
+                  style="filter: invert(1) brightness(2);"
+                />
+              </a>
             </div>
           </div>
-          <div class="flex shrink-0 flex-col gap-3 md:items-end md:text-right">
+          <div class="flex shrink-0 flex-col gap-3 items-start text-left md:items-end md:text-right">
             <h4 class="mb-1 font-display text-sm uppercase tracking-widest text-isis-rose">Institucional</h4>
-            <nav class="flex flex-col gap-3 text-sm text-isis-light/60 md:items-end">
-              <button type="button" (click)="scrollTo('quem-somos')" class="transition-colors hover:text-white bg-transparent border-0 p-0 cursor-pointer text-sm text-isis-light/60 font-sans">Quem Somos</button>
-              <button type="button" (click)="scrollTo('portfolio')" class="transition-colors hover:text-white bg-transparent border-0 p-0 cursor-pointer text-sm text-isis-light/60 font-sans">Portfólio</button>
+            <nav class="flex flex-col gap-3 text-sm text-isis-light/60 items-start md:items-end">
+              <button type="button" (click)="scrollTo('quem-somos')" class="transition-colors hover:text-white bg-transparent border-0 p-0 cursor-pointer text-left text-sm text-isis-light/60 font-sans">Quem Somos</button>
+              <button type="button" (click)="scrollTo('portfolio')" class="transition-colors hover:text-white bg-transparent border-0 p-0 cursor-pointer text-left text-sm text-isis-light/60 font-sans">Portfólio</button>
             </nav>
           </div>
         </div>

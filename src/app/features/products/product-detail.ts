@@ -36,8 +36,6 @@ const SIZE_ORDER = [
   'XGG',
 ];
 
-const THUMB_FOCUS = ['50% 50%', '30% 20%', '70% 35%', '45% 70%', '60% 55%'] as const;
-
 function sortSizes(sizes: string[]): string[] {
   return [...sizes].sort(
     (a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b) || a.localeCompare(b),
@@ -62,38 +60,24 @@ function sortSizes(sizes: string[]): string[] {
         } @else if (row(); as p) {
           <div class="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
             <div class="w-full lg:flex-1 lg:max-w-[52%] order-1">
-              <div class="aspect-square bg-white border border-isis-blue/10 overflow-hidden">
+              <div class="relative aspect-square bg-white border border-isis-blue/10 overflow-hidden">
                 <img
                   [src]="mainImage()"
                   [alt]="p.name"
-                  class="w-full h-full object-cover transition-[object-position] duration-300"
-                  [style.object-position]="thumbFocus[activeThumb()]"
+                  class="w-full h-full object-cover"
                   referrerpolicy="no-referrer"
                 />
+                @if (selectedColorVariant(); as variant) {
+                  <div class="absolute bottom-4 right-4 w-24 h-24 overflow-hidden rounded-2xl border border-white/80 bg-white shadow-xl ring-1 ring-isis-dark/10">
+                    <img
+                      [src]="resolveVariantImage(variant.imageUrl)"
+                      [alt]="p.name + ' - ' + variant.hex"
+                      class="w-full h-full object-cover"
+                      referrerpolicy="no-referrer"
+                    />
+                  </div>
+                }
               </div>
-            </div>
-
-            <div
-              class="flex lg:flex-col gap-2 order-3 lg:order-2 w-full lg:w-24 shrink-0 justify-center lg:justify-start"
-            >
-              @for (i of thumbIndices; track i) {
-                <button
-                  type="button"
-                  (click)="activeThumb.set(i)"
-                  class="w-16 h-16 md:w-20 md:h-20 shrink-0 border overflow-hidden bg-white transition-all"
-                  [class.border-isis-dark]="activeThumb() === i"
-                  [class.border-isis-blue/15]="activeThumb() !== i"
-                  [attr.aria-label]="'Vista ' + (i + 1)"
-                >
-                  <img
-                    [src]="mainImage()"
-                    alt=""
-                    class="w-full h-full object-cover"
-                    [style.object-position]="thumbFocus[i]"
-                    referrerpolicy="no-referrer"
-                  />
-                </button>
-              }
             </div>
 
             <div class="w-full lg:max-w-md bg-white border border-isis-blue/10 p-8 md:p-10 shadow-sm order-2 lg:order-3">
@@ -187,11 +171,6 @@ export class ProductDetail {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isAdmin = computed(() => this.auth.user()?.role === 'ADMIN');
-
-  readonly thumbFocus = THUMB_FOCUS;
-  readonly thumbIndices = [0, 1, 2, 3, 4] as const;
-
-  activeThumb = signal(0);
   selectedSize = signal<string | null>(null);
   selectedColor = signal('#1a1a1a');
   addedToCart = signal(false);
@@ -202,23 +181,27 @@ export class ProductDetail {
 
   catalogColors = computed<ProductColorVariantApiRow[]>(() => this.row()?.colors ?? []);
 
+  selectedColorVariant = computed(() => {
+    const r = this.row();
+    if (!r) return null;
+    const hex = this.selectedColor();
+    const match = (r.colors ?? []).find((c) => c.hex === hex && c.imageUrl?.trim());
+    return match?.imageUrl?.trim() ? match : null;
+  });
+
+  baseImage = computed(() => {
+    const r = this.row();
+    if (!r) return CATALOG_IMAGE_PLACEHOLDER;
+    const raw = r.image ?? CATALOG_IMAGE_PLACEHOLDER;
+    return resolvePublicMediaUrl(raw) || raw;
+  });
+
   showSizes = computed(() => {
     const r = this.row();
     return !!r && GARMENT_CATEGORIES.has(r.category);
   });
 
-  mainImage = computed(() => {
-    const r = this.row();
-    if (!r) return CATALOG_IMAGE_PLACEHOLDER;
-    const hex = this.selectedColor();
-    const match = (r.colors ?? []).find((c) => c.hex === hex && c.imageUrl?.trim());
-    if (match?.imageUrl) {
-      const u = match.imageUrl.trim();
-      return resolvePublicMediaUrl(u) || u;
-    }
-    const raw = r.image ?? CATALOG_IMAGE_PLACEHOLDER;
-    return resolvePublicMediaUrl(raw) || raw;
-  });
+  mainImage = computed(() => this.baseImage());
 
   orderedSizes = computed(() => {
     const r = this.row();
@@ -280,6 +263,11 @@ export class ProductDetail {
     this.cart.addItem(p, 1, this.selectedSize(), this.selectedColor());
     this.addedToCart.set(true);
     setTimeout(() => this.addedToCart.set(false), 2500);
+  }
+
+  resolveVariantImage(url: string | null | undefined): string {
+    const raw = String(url ?? '').trim();
+    return resolvePublicMediaUrl(raw) || raw || this.baseImage();
   }
 
   isSizeAvailable(size: string): boolean {

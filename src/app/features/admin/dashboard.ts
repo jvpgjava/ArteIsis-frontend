@@ -274,11 +274,11 @@ function mapOrder(r: OrderApiRow): Order {
     FormsModule,
   ],
   template: `
-    <div class="min-w-0 px-8 md:px-12 py-12 bg-isis-light min-h-[80vh]">
-      <div class="max-w-7xl mx-auto min-w-0 space-y-12">
-        <div class="flex justify-between items-center">
-          <h1 class="text-4xl font-display text-isis-blue uppercase tracking-tight">PAINEL DE CONTROLE</h1>
-          <div class="flex flex-wrap gap-4 items-center justify-end">
+    <div class="min-w-0 px-4 md:px-8 lg:px-12 py-8 md:py-12 bg-isis-light min-h-[80vh]">
+      <div class="max-w-7xl mx-auto min-w-0 space-y-8 md:space-y-12">
+        <div class="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+          <h1 class="text-3xl md:text-4xl font-display text-isis-blue uppercase tracking-tight">PAINEL DE CONTROLE</h1>
+          <div class="flex flex-wrap gap-2 md:gap-4 items-center justify-start md:justify-end">
             <app-button (click)="view.set('orders'); resetFilters()" [variant]="view() === 'orders' ? 'primary' : 'outline'">Pedidos</app-button>
             <app-button (click)="view.set('customers')" [variant]="view() === 'customers' ? 'primary' : 'outline'">Clientes</app-button>
             <app-button (click)="view.set('products')" [variant]="view() === 'products' ? 'primary' : 'outline'">Produtos</app-button>
@@ -289,11 +289,11 @@ function mapOrder(r: OrderApiRow): Order {
         @if (view() === 'orders') {
           <div class="space-y-6 animate-fade-in">
             <div class="w-full space-y-4">
-              <h2 class="text-2xl font-display text-isis-blue">LISTAGEM DE PEDIDOS</h2>
+              <h2 class="text-xl md:text-2xl font-display text-isis-blue">LISTAGEM DE PEDIDOS</h2>
               <div
-                class="relative z-10 grid w-full grid-cols-1 gap-3 md:grid-cols-12 md:items-end md:gap-4"
+                class="relative z-10 grid w-full grid-cols-1 gap-2 sm:gap-3 md:grid-cols-12 md:items-end md:gap-4"
               >
-                <div class="relative min-w-0 md:col-span-3 lg:col-span-4">
+                <div class="relative min-w-0 sm:col-span-1 md:col-span-3 lg:col-span-4">
                   <label class="sr-only" for="orders-search-q">Pesquisar pedidos</label>
                   <mat-icon
                     class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-isis-dark/25 !h-[22px] !w-[22px] !text-[22px]"
@@ -303,18 +303,18 @@ function mapOrder(r: OrderApiRow): Order {
                     type="text"
                     [(ngModel)]="searchQuery"
                     placeholder="Pesquisar…"
-                    class="font-sans h-[3.25rem] w-full rounded-xl border border-isis-blue/15 bg-white py-0 pl-11 pr-4 text-sm font-semibold text-isis-dark shadow-sm placeholder:text-isis-dark/35 transition-all focus:outline-none focus:ring-2 focus:ring-isis-blue/20"
+                    class="font-sans h-10 sm:h-[3.25rem] w-full rounded-xl border border-isis-blue/15 bg-white py-0 pl-11 pr-4 text-xs sm:text-sm font-semibold text-isis-dark shadow-sm placeholder:text-isis-dark/35 transition-all focus:outline-none focus:ring-2 focus:ring-isis-blue/20"
                   />
                 </div>
-                <div class="min-w-0 md:col-span-3 lg:col-span-3">
+                <div class="min-w-0 sm:col-span-1 md:col-span-3 lg:col-span-3">
                   <app-select
-                    class="w-full [&>div>div>button]:h-[3.25rem] [&>div>div>button]:min-h-0 [&>div>div>button]:rounded-xl [&>div>div>button]:border-isis-blue/15 [&>div>div>button]:bg-white [&>div>div>button]:px-4 [&>div>div>button]:py-0 [&>div>div>button]:text-xs [&>div>div>button]:font-bold [&>div>div>button]:uppercase [&>div>div>button]:tracking-wider [&>div>div>button]:shadow-sm"
+                    class="w-full [&>div>div>button]:h-10 sm:[&>div>div>button]:h-[3.25rem] [&>div>div>button]:min-h-0 [&>div>div>button]:rounded-xl [&>div>div>button]:border-isis-blue/15 [&>div>div>button]:bg-white [&>div>div>button]:px-3 sm:[&>div>div>button]:px-4 [&>div>div>button]:py-0 [&>div>div>button]:text-xs [&>div>div>button]:font-bold [&>div>div>button]:uppercase [&>div>div>button]:tracking-wider [&>div>div>button]:shadow-sm"
                     placeholder="Status: todos"
                     [options]="orderStatusFilterOptions"
                     [(value)]="statusFilter"
                   />
                 </div>
-                <div class="min-w-0 md:col-span-4 lg:col-span-3">
+                <div class="min-w-0 sm:col-span-1 md:col-span-4 lg:col-span-3">
                   <label class="sr-only" for="orders-filter-date">Filtrar por data do pedido</label>
                   <input
                     id="orders-filter-date"
@@ -324,15 +324,15 @@ function mapOrder(r: OrderApiRow): Order {
                     [ngModel]="dateFilter()"
                     (ngModelChange)="dateFilter.set($event)"
                     aria-label="Filtrar por data do pedido"
-                    class="font-sans h-[3.25rem] w-full min-w-0 rounded-xl border border-isis-blue/15 bg-white px-3 text-xs font-bold uppercase tracking-wider text-isis-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-isis-blue/20 [color-scheme:light]"
+                    class="font-sans h-10 sm:h-[3.25rem] w-full min-w-0 rounded-xl border border-isis-blue/15 bg-white px-3 text-xs sm:text-xs font-bold uppercase tracking-wider text-isis-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-isis-blue/20 [color-scheme:light]"
                   />
                 </div>
-                <div class="flex w-full min-w-0 md:col-span-2 lg:col-span-2 md:justify-end">
+                <div class="flex w-full min-w-0 sm:col-span-1 md:col-span-2 lg:col-span-2 md:justify-end">
                   <app-button
                     variant="secondary"
                     size="md"
                     (click)="openOrderModal()"
-                    class="w-full md:w-auto [&_button]:flex [&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
+                    class="w-full sm:w-auto md:w-auto [&_button]:flex [&_button]:h-10 sm:[&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-3 sm:[&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
                   >
                     <mat-icon class="scale-90">add</mat-icon>
                     Novo pedido
@@ -342,14 +342,83 @@ function mapOrder(r: OrderApiRow): Order {
             </div>
 
             <div class="min-w-0 bg-white rounded-3xl overflow-hidden shadow-sm border border-isis-blue/5">
-              <div class="min-w-0 overflow-x-auto">
-                <table class="w-full min-w-0 text-left">
+              <!-- Mobile / tablet: cards empilhados (sem scroll horizontal) -->
+              <div class="lg:hidden space-y-3 p-3 sm:p-4">
+                @for (order of orders(); track order.id) {
+                  <article class="rounded-2xl border border-isis-blue/10 bg-white p-4 shadow-sm">
+                    <div class="flex items-start gap-3">
+                      <div class="min-w-0 flex-1 space-y-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <h3 class="text-base font-bold text-isis-dark leading-tight break-words">{{ order.customer }}</h3>
+                          <span
+                            class="inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                            [class]="orderStatusBadgeClass(order.status)"
+                          >
+                            {{ order.status }}
+                          </span>
+                        </div>
+                        <p class="text-sm leading-snug text-isis-blue/90 break-words">{{ order.product }}</p>
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-isis-dark/55">
+                          <span class="inline-flex items-center gap-1.5 font-semibold tabular-nums text-isis-dark/70">
+                            <mat-icon class="!h-3.5 !w-3.5 !text-[14px] text-isis-dark/35">calendar_today</mat-icon>
+                            {{ order.date | date: 'dd/MM/yy' }}
+                          </span>
+                          @if (order.colors.length > 0) {
+                            <span class="inline-flex items-center gap-1.5">
+                              @for (hex of order.colors; track hex) {
+                                <span
+                                  class="inline-block h-4 w-4 rounded-full border border-isis-dark/15 shadow-sm ring-1 ring-white"
+                                  [style.background]="hex"
+                                  [title]="hex"
+                                ></span>
+                              }
+                            </span>
+                          }
+                        </div>
+                      </div>
+                      <div class="flex shrink-0 flex-col items-end gap-2">
+                        <p class="text-base font-bold tabular-nums text-isis-blue whitespace-nowrap">
+                          {{ formatOrderBrl(order.total) }}
+                        </p>
+                        <div class="inline-flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            (click)="openOrderModal(order)"
+                            aria-label="Editar pedido"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-isis-light text-isis-blue transition-colors hover:bg-isis-blue/10"
+                          >
+                            <mat-icon class="!h-[18px] !w-[18px] !text-[18px]">edit</mat-icon>
+                          </button>
+                          <button
+                            type="button"
+                            (click)="deleteOrderRow(order)"
+                            aria-label="Remover pedido"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-isis-rose/5 text-isis-rose transition-colors hover:bg-isis-rose/15"
+                          >
+                            <mat-icon class="!h-[18px] !w-[18px] !text-[18px]">delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                }
+                @if (orders().length === 0) {
+                  <div class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-isis-blue/15 bg-isis-light/40 p-16 text-isis-dark/20">
+                    <mat-icon class="scale-[1.5]">manage_search</mat-icon>
+                    <p class="text-xs font-bold uppercase tracking-widest">Nenhum pedido encontrado</p>
+                  </div>
+                }
+              </div>
+
+              <!-- Desktop: tabela -->
+              <div class="hidden lg:block min-w-0 overflow-x-auto">
+                <table class="w-full text-left text-sm">
                   <thead class="bg-isis-light/30 border-b border-isis-blue/5">
                     <tr>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cliente</th>
                       <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Produto</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cor</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Data</th>
+                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Data</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Status</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Valor</th>
                       <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
@@ -358,10 +427,10 @@ function mapOrder(r: OrderApiRow): Order {
                   <tbody>
                     @for (order of orders(); track order.id) {
                       <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ order.customer }}</td>
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ order.product }}</td>
+                        <td class="px-6 py-5 align-middle text-sm font-semibold text-isis-blue whitespace-nowrap">{{ order.customer }}</td>
+                        <td class="px-6 py-5 align-middle text-sm font-semibold text-isis-blue">{{ order.product }}</td>
                         <td class="px-6 py-5 align-middle text-center">
-                          <div class="flex flex-wrap justify-center gap-1.5">
+                          <div class="flex flex-wrap justify-center gap-1">
                             @for (hex of order.colors; track hex) {
                               <span
                                 class="inline-block w-5 h-5 rounded-sm border border-isis-dark/20 shadow-sm"
@@ -375,7 +444,7 @@ function mapOrder(r: OrderApiRow): Order {
                           </div>
                         </td>
                         <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums whitespace-nowrap">
-                          {{ order.date | date: 'dd/MM/yyyy' }}
+                          {{ order.date | date: 'dd/MM/yy' }}
                         </td>
                         <td class="px-6 py-5 align-middle text-center">
                           <span class="text-sm font-semibold uppercase tracking-wide text-isis-blue">{{ order.status }}</span>
@@ -423,9 +492,9 @@ function mapOrder(r: OrderApiRow): Order {
         } @else if (view() === 'customers') {
           <div class="space-y-6 animate-fade-in">
             <div class="w-full space-y-4">
-              <h2 class="text-2xl font-display text-isis-blue">LISTAGEM DE CLIENTES</h2>
+              <h2 class="text-xl md:text-2xl font-display text-isis-blue">LISTAGEM DE CLIENTES</h2>
               <div
-                class="flex w-full flex-col gap-4 md:flex-row md:items-stretch md:gap-4"
+                class="flex w-full flex-col gap-3 md:gap-4 md:flex-row md:items-stretch"
               >
                 <div class="relative min-w-0 flex-1">
                   <mat-icon
@@ -435,14 +504,14 @@ function mapOrder(r: OrderApiRow): Order {
                     type="text"
                     [(ngModel)]="customerSearchQuery"
                     placeholder="Pesquisar por nome, e-mail ou telefone..."
-                    class="w-full min-h-[3.25rem] rounded-xl border border-isis-blue/15 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-isis-dark shadow-sm placeholder:text-isis-dark/35 focus:outline-none focus:ring-2 focus:ring-isis-blue/20 font-sans transition-all"
+                    class="w-full min-h-10 sm:min-h-[3.25rem] rounded-xl border border-isis-blue/15 bg-white py-2 sm:py-3 pl-11 pr-4 text-xs sm:text-sm font-semibold text-isis-dark shadow-sm placeholder:text-isis-dark/35 focus:outline-none focus:ring-2 focus:ring-isis-blue/20 font-sans transition-all"
                   />
                 </div>
                 <app-button
                   variant="secondary"
                   size="md"
                   (click)="openCustomerModal()"
-                  class="w-full shrink-0 md:w-auto md:self-center md:min-w-[13rem] [&_button]:flex [&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
+                  class="w-full shrink-0 md:w-auto md:self-center md:min-w-[13rem] [&_button]:flex [&_button]:h-10 sm:[&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-3 sm:[&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
                 >
                   <mat-icon class="scale-90 -ml-0.5">person_add</mat-icon>
                   Novo Cliente
@@ -452,41 +521,41 @@ function mapOrder(r: OrderApiRow): Order {
 
             <div class="min-w-0 bg-white rounded-3xl overflow-hidden shadow-sm border border-isis-blue/5">
               <div class="min-w-0 overflow-x-auto">
-                <table class="w-full min-w-0 text-left">
+                <table class="w-full min-w-0 text-left text-xs sm:text-sm">
                   <thead class="bg-isis-light/30 border-b border-isis-blue/5">
                     <tr>
-                      <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cliente</th>
-                      <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Contato</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Histórico</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Cliente</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Contato</th>
+                      <th class="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Histórico</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (customer of customers(); track customer.id) {
                       <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ customer.name }}</td>
-                        <td class="px-6 py-5 align-middle text-left">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-left text-xs sm:text-sm font-semibold text-isis-blue whitespace-nowrap">{{ customer.name }}</td>
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-left">
                           <div class="flex flex-col gap-1">
-                            <span class="text-sm font-semibold text-isis-blue">{{ customer.email }}</span>
-                            <span class="text-sm font-medium text-isis-blue/90 font-mono tracking-tight">{{ customer.phone }}</span>
+                            <span class="text-xs sm:text-sm font-semibold text-isis-blue">{{ customer.email }}</span>
+                            <span class="text-xs sm:text-sm font-medium text-isis-blue/90 font-mono tracking-tight">{{ customer.phone }}</span>
                           </div>
                         </td>
-                        <td class="px-6 py-5 align-middle text-center">
+                        <td class="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-5 align-middle text-center">
                           <button
                             type="button"
                             (click)="viewCustomerOrders(customer)"
-                            class="inline-flex items-center justify-center rounded-lg border border-isis-blue/20 bg-isis-blue/5 px-3 py-2 text-sm font-semibold uppercase tracking-wide text-isis-blue transition-colors hover:border-isis-blue/35 hover:bg-isis-blue/10"
+                            class="inline-flex items-center justify-center rounded-lg border border-isis-blue/20 bg-isis-blue/5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold uppercase tracking-wide text-isis-blue transition-colors hover:border-isis-blue/35 hover:bg-isis-blue/10 whitespace-nowrap"
                           >
                             {{ customer.orders }} {{ customer.orders === 1 ? 'PEDIDO' : 'PEDIDOS' }}
                           </button>
                         </td>
-                        <td class="px-6 py-5 align-middle text-center">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-center">
                           <div class="inline-flex items-center justify-center gap-0.5">
                             <button
                               type="button"
                               (click)="openCustomerModal(customer)"
                               aria-label="Editar cliente"
-                              class="p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light scale-90"
+                              class="p-1.5 sm:p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light sm:scale-100 scale-75"
                             >
                               <mat-icon>edit</mat-icon>
                             </button>
@@ -494,7 +563,7 @@ function mapOrder(r: OrderApiRow): Order {
                               type="button"
                               (click)="deleteCustomerRow(customer)"
                               aria-label="Remover cliente"
-                              class="p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 scale-90"
+                              class="p-1.5 sm:p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 sm:scale-100 scale-75"
                             >
                               <mat-icon>delete</mat-icon>
                             </button>
@@ -504,7 +573,7 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (customers().length === 0) {
                       <tr>
-                        <td colspan="4" class="p-24 text-center">
+                        <td [attr.colspan]="3" class="p-16 sm:p-24 text-center">
                           <div class="flex flex-col items-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">person_search</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum cliente encontrado</p>
@@ -520,9 +589,9 @@ function mapOrder(r: OrderApiRow): Order {
         } @else if (view() === 'products') {
           <div class="space-y-6 animate-fade-in">
             <div class="w-full space-y-4">
-              <h2 class="text-2xl font-display text-isis-blue">LISTAGEM DE PRODUTOS</h2>
+              <h2 class="text-xl md:text-2xl font-display text-isis-blue">LISTAGEM DE PRODUTOS</h2>
               <div
-                class="flex w-full flex-col gap-4 md:flex-row md:items-stretch md:gap-4"
+                class="flex w-full flex-col gap-3 md:gap-4 md:flex-row md:items-stretch"
               >
                 <div class="relative min-w-0 flex-1">
                   <mat-icon
@@ -532,14 +601,14 @@ function mapOrder(r: OrderApiRow): Order {
                     type="text"
                     [(ngModel)]="productSearchQuery"
                     placeholder="Pesquisar por nome ou categoria..."
-                    class="w-full min-h-[3.25rem] rounded-xl border border-isis-blue/15 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-isis-dark shadow-sm placeholder:text-isis-dark/35 focus:outline-none focus:ring-2 focus:ring-isis-blue/20 font-sans transition-all"
+                    class="w-full min-h-10 sm:min-h-[3.25rem] rounded-xl border border-isis-blue/15 bg-white py-2 sm:py-3 pl-11 pr-4 text-xs sm:text-sm font-semibold text-isis-dark shadow-sm placeholder:text-isis-dark/35 focus:outline-none focus:ring-2 focus:ring-isis-blue/20 font-sans transition-all"
                   />
                 </div>
                 <app-button
                   variant="secondary"
                   size="md"
                   (click)="openProductModal()"
-                  class="w-full shrink-0 md:w-auto md:self-center md:min-w-[13rem] [&_button]:flex [&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
+                  class="w-full shrink-0 md:w-auto md:self-center md:min-w-[13rem] [&_button]:flex [&_button]:h-10 sm:[&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-3 sm:[&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
                 >
                   <mat-icon class="scale-90 -ml-0.5">add_box</mat-icon>
                   Novo Produto
@@ -549,32 +618,32 @@ function mapOrder(r: OrderApiRow): Order {
 
             <div class="min-w-0 bg-white rounded-3xl overflow-hidden shadow-sm border border-isis-blue/5">
               <div class="min-w-0 overflow-x-auto">
-                <table class="w-full min-w-0 text-left">
+                <table class="w-full min-w-0 text-left text-xs sm:text-sm">
                   <thead class="bg-isis-light/30 border-b border-isis-blue/5">
                     <tr>
-                      <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Produto</th>
-                      <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Categoria</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Valor</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Produto</th>
+                      <th class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Categoria</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Valor</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (product of products(); track product.id) {
                       <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ product.name }}</td>
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold uppercase tracking-wide text-isis-blue">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-left text-xs sm:text-sm font-semibold text-isis-blue whitespace-nowrap">{{ product.name }}</td>
+                        <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-5 align-middle text-left text-xs sm:text-sm font-semibold uppercase tracking-wide text-isis-blue">
                           {{ product.category }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-center text-sm font-semibold text-isis-blue tabular-nums">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-center text-xs sm:text-sm font-semibold text-isis-blue tabular-nums">
                           {{ product.price | currency: 'BRL' }}
                         </td>
-                        <td class="px-6 py-5 align-middle text-center">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-center">
                           <div class="inline-flex items-center justify-center gap-0.5">
                             <button
                               type="button"
                               (click)="openProductModal(product)"
                               aria-label="Editar produto"
-                              class="p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light scale-90"
+                              class="p-1.5 sm:p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light sm:scale-100 scale-75"
                             >
                               <mat-icon>edit</mat-icon>
                             </button>
@@ -582,7 +651,7 @@ function mapOrder(r: OrderApiRow): Order {
                               type="button"
                               (click)="deleteProductRow(product)"
                               aria-label="Remover produto"
-                              class="p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 scale-90"
+                              class="p-1.5 sm:p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 sm:scale-100 scale-75"
                             >
                               <mat-icon>delete</mat-icon>
                             </button>
@@ -592,7 +661,7 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (products().length === 0) {
                       <tr>
-                        <td colspan="4" class="p-24 text-center">
+                        <td [attr.colspan]="3" class="p-16 sm:p-24 text-center">
                           <div class="flex flex-col items-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">search_off</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum produto cadastrado</p>
@@ -608,18 +677,18 @@ function mapOrder(r: OrderApiRow): Order {
         } @else {
           <div class="space-y-6 animate-fade-in">
             <div class="w-full space-y-4">
-              <h2 class="text-2xl font-display text-isis-blue">PORTFÓLIO</h2>
+              <h2 class="text-xl md:text-2xl font-display text-isis-blue">PORTFÓLIO</h2>
               <div
-                class="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6"
+                class="flex w-full flex-col gap-3 md:gap-6 md:flex-row md:items-center md:justify-between"
               >
-                <p class="text-sm leading-relaxed text-isis-dark/55 md:max-w-3xl">
+                <p class="text-xs sm:text-sm leading-relaxed text-isis-dark/55 md:max-w-3xl">
                   As imagens colocadas aqui aparecem na secção &quot;Portfólio&quot; da página inicial.
                 </p>
                 <app-button
                   variant="secondary"
                   size="md"
                   (click)="openPortfolioModal()"
-                  class="w-full shrink-0 md:w-auto md:min-w-[12rem] [&_button]:flex [&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
+                  class="w-full shrink-0 md:w-auto md:min-w-[12rem] [&_button]:flex [&_button]:h-10 sm:[&_button]:h-[3.25rem] [&_button]:min-h-0 [&_button]:items-center [&_button]:justify-center [&_button]:gap-1.5 [&_button]:rounded-xl [&_button]:px-3 sm:[&_button]:px-6 [&_button]:py-0 [&_button]:text-xs [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-widest"
                 >
                   <mat-icon class="scale-90 -ml-0.5">add_photo_alternate</mat-icon>
                   Novo item
@@ -628,39 +697,39 @@ function mapOrder(r: OrderApiRow): Order {
             </div>
             <div class="min-w-0 bg-white rounded-3xl overflow-hidden shadow-sm border border-isis-blue/5">
               <div class="min-w-0 overflow-x-auto">
-                <table class="w-full min-w-0 text-left">
+                <table class="w-full min-w-0 text-left text-xs sm:text-sm">
                   <thead class="bg-isis-light/30 border-b border-isis-blue/5">
                     <tr>
-                      <th class="px-6 py-4 w-24 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Imagem</th>
-                      <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Título</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Ativo</th>
-                      <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 w-16 sm:w-24 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Imagem</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-isis-dark/55">Título</th>
+                      <th class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55">Ativo</th>
+                      <th class="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold uppercase tracking-wider text-isis-dark/55 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (row of portfolioRows(); track row.id) {
                       <tr class="border-b border-isis-blue/5 hover:bg-isis-light/5 transition-colors">
-                        <td class="px-6 py-5 align-middle text-left">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-left">
                           <img
                             [src]="mediaUrl(row.imageUrl)"
                             [alt]="row.title"
-                            class="h-14 w-14 rounded-lg object-cover border border-isis-blue/10"
+                            class="h-10 w-10 sm:h-14 sm:w-14 rounded-lg object-cover border border-isis-blue/10"
                             referrerpolicy="no-referrer"
                           />
                         </td>
-                        <td class="px-6 py-5 align-middle text-left text-sm font-semibold text-isis-blue">{{ row.title }}</td>
-                        <td class="px-6 py-5 align-middle text-center">
-                          <span class="text-sm font-semibold uppercase tracking-wide text-isis-blue">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-left text-xs sm:text-sm font-semibold text-isis-blue">{{ row.title }}</td>
+                        <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-5 align-middle text-center">
+                          <span class="text-xs sm:text-sm font-semibold uppercase tracking-wide text-isis-blue">
                             {{ row.active ? 'Sim' : 'Não' }}
                           </span>
                         </td>
-                        <td class="px-6 py-5 align-middle text-center whitespace-nowrap">
+                        <td class="px-3 sm:px-6 py-3 sm:py-5 align-middle text-center whitespace-nowrap">
                           <div class="inline-flex items-center justify-center gap-0.5">
                             <button
                               type="button"
                               (click)="openPortfolioModal(row)"
                               aria-label="Editar item de portfólio"
-                              class="p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light scale-90 inline-flex align-middle"
+                              class="p-1.5 sm:p-2 rounded-xl transition-all text-isis-blue hover:bg-isis-light sm:scale-100 scale-75 inline-flex align-middle"
                             >
                               <mat-icon>edit</mat-icon>
                             </button>
@@ -668,7 +737,7 @@ function mapOrder(r: OrderApiRow): Order {
                               type="button"
                               (click)="deletePortfolioRow(row)"
                               aria-label="Remover item de portfólio"
-                              class="p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 scale-90 inline-flex align-middle"
+                              class="p-1.5 sm:p-2 rounded-xl transition-all text-isis-rose hover:bg-isis-rose/10 sm:scale-100 scale-75 inline-flex align-middle"
                             >
                               <mat-icon>delete</mat-icon>
                             </button>
@@ -678,7 +747,7 @@ function mapOrder(r: OrderApiRow): Order {
                     }
                     @if (portfolioRows().length === 0) {
                       <tr>
-                        <td colspan="4" class="p-24 text-center">
+                        <td [attr.colspan]="3" class="p-16 sm:p-24 text-center">
                           <div class="flex flex-col items-center gap-3 text-isis-dark/20">
                             <mat-icon class="scale-[1.5]">collections</mat-icon>
                             <p class="text-xs font-bold uppercase tracking-widest">Nenhum item de portfólio</p>
@@ -770,21 +839,23 @@ function mapOrder(r: OrderApiRow): Order {
         }
 
         @if (showCustomerForm()) {
-          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-isis-dark/40 backdrop-blur-sm animate-fade-in">
-            <div class="bg-white w-full max-w-lg p-10 rounded-3xl shadow-2xl space-y-8 animate-scale-in">
-              <div class="flex justify-between items-center">
-                <h3 class="text-2xl font-display text-isis-blue">{{ selectedCustomer() ? 'EDITAR CLIENTE' : 'NOVO CLIENTE' }}</h3>
-                <button (click)="closeModals()" class="text-isis-dark/40 hover:text-isis-rose transition-colors">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-              <div class="flex flex-col gap-8">
-                <app-input label="Nome completo" placeholder="Nome" [(value)]="customerFormName" />
-                <app-input label="Telefone" placeholder="(11) 99999-9999" mask="phone-br" [(value)]="customerFormPhone" />
-                <app-input label="E-mail" type="email" placeholder="cliente@email.com" mask="email" [(value)]="customerFormEmail" />
-                <app-button class="w-full mt-2" (click)="saveCustomer()">
-                  {{ selectedCustomer() ? 'Salvar alterações' : 'Cadastrar cliente' }}
-                </app-button>
+          <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain p-4 py-8 sm:items-center sm:py-10 bg-isis-dark/40 backdrop-blur-sm animate-fade-in">
+            <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col min-h-0">
+              <div class="max-h-[min(90vh,44rem)] overflow-y-auto overflow-x-hidden flex flex-col min-h-0 p-6 sm:p-10">
+                <div class="flex justify-between items-center gap-4 pb-4 sm:pb-6 border-b border-isis-blue/5 shrink-0">
+                  <h3 class="text-xl sm:text-2xl font-display text-isis-blue">{{ selectedCustomer() ? 'EDITAR CLIENTE' : 'NOVO CLIENTE' }}</h3>
+                  <button (click)="closeModals()" class="text-isis-dark/40 hover:text-isis-rose transition-colors">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <div class="flex flex-col gap-4 sm:gap-8 pt-4 sm:pt-6">
+                  <app-input label="Nome completo" placeholder="Nome" [(value)]="customerFormName" />
+                  <app-input label="Telefone" placeholder="(11) 99999-9999" mask="phone-br" [(value)]="customerFormPhone" />
+                  <app-input label="E-mail" type="email" placeholder="cliente@email.com" mask="email" [(value)]="customerFormEmail" />
+                  <app-button class="w-full mt-2" (click)="saveCustomer()">
+                    {{ selectedCustomer() ? 'Salvar alterações' : 'Cadastrar cliente' }}
+                  </app-button>
+                </div>
               </div>
             </div>
           </div>
@@ -798,15 +869,15 @@ function mapOrder(r: OrderApiRow): Order {
               class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col min-h-0"
             >
               <div
-                class="max-h-[min(90vh,44rem)] overflow-y-auto overflow-x-hidden flex flex-col min-h-0 p-8 sm:p-10"
+                class="max-h-[min(90vh,44rem)] overflow-y-auto overflow-x-hidden flex flex-col min-h-0 p-6 sm:p-10"
               >
-                <div class="flex shrink-0 justify-between items-center gap-4 pb-6 border-b border-isis-blue/5">
-                  <h3 class="text-2xl font-display text-isis-blue">{{ selectedProduct() ? 'EDITAR PRODUTO' : 'NOVO PRODUTO' }}</h3>
+                <div class="flex shrink-0 justify-between items-center gap-4 pb-4 sm:pb-6 border-b border-isis-blue/5">
+                  <h3 class="text-xl sm:text-2xl font-display text-isis-blue">{{ selectedProduct() ? 'EDITAR PRODUTO' : 'NOVO PRODUTO' }}</h3>
                   <button type="button" (click)="closeModals()" class="shrink-0 text-isis-dark/40 hover:text-isis-rose transition-colors">
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
-                <div class="flex flex-col gap-6 pt-6">
+                <div class="flex flex-col gap-4 sm:gap-6 pt-4 sm:pt-6">
                   <app-input label="Nome do produto" placeholder="Ex: Camiseta serigrafada" [(value)]="productFormName" />
                   <app-select label="Categoria" [options]="productCategoryOptions" [(value)]="productFormCategory" />
                   <app-input label="Valor unitário (R$)" placeholder="R$ 0,00" mask="currency-brl" [(value)]="productFormPriceStr" />
@@ -814,12 +885,12 @@ function mapOrder(r: OrderApiRow): Order {
                   <app-select label="Etiqueta (catálogo)" [options]="productLabelOptions" [(value)]="productFormLabel" />
                   <app-select label="Disponibilidade" [options]="availabilityOptions" [(value)]="productFormAvailability" />
                   @if (isGarmentProductCategory(productFormCategory() || '')) {
-                    <div class="flex flex-col gap-3 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-4">
-                      <span class="px-0.5 text-sm font-semibold tracking-wide text-isis-dark/70">Tamanhos</span>
-                      <div class="flex flex-wrap gap-2">
+                    <div class="flex flex-col gap-2 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-3 sm:p-4">
+                      <span class="px-0.5 text-xs sm:text-sm font-semibold tracking-wide text-isis-dark/70">Tamanhos</span>
+                      <div class="flex flex-wrap gap-1.5 sm:gap-2">
                         @for (sz of brDisplaySizes; track sz) {
                           <label
-                            class="inline-flex cursor-pointer select-none items-center gap-2 rounded-lg border border-isis-blue/15 bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-isis-dark shadow-sm"
+                            class="inline-flex cursor-pointer select-none items-center gap-2 rounded-lg border border-isis-blue/15 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-bold uppercase tracking-wide text-isis-dark shadow-sm"
                           >
                             <input
                               type="checkbox"
@@ -833,7 +904,7 @@ function mapOrder(r: OrderApiRow): Order {
                       </div>
                     </div>
                   }
-                  <div class="flex flex-col gap-3 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-4">
+                  <div class="flex flex-col gap-2 rounded-2xl border border-isis-blue/10 bg-isis-light/40 p-3 sm:p-4">
                     <div class="flex flex-wrap items-center justify-between gap-2 px-0.5">
                       <span class="text-xs font-bold uppercase tracking-wider text-isis-dark/50">Cores do produto</span>
                       <button
@@ -846,7 +917,7 @@ function mapOrder(r: OrderApiRow): Order {
                     </div>
                     @for (row of productFormColorRows(); track $index) {
                       <div
-                        class="flex flex-col gap-3 rounded-xl border border-isis-blue/10 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center"
+                        class="flex flex-col gap-2 sm:gap-3 rounded-xl border border-isis-blue/10 bg-white p-2 sm:p-3 sm:flex-row sm:flex-wrap sm:items-center"
                       >
                         <label class="flex shrink-0 items-center gap-2 text-xs font-bold uppercase text-isis-dark/50">
                           Cor
@@ -870,10 +941,10 @@ function mapOrder(r: OrderApiRow): Order {
                           <img
                             [src]="mediaUrl(row.imageUrl)"
                             alt=""
-                            class="h-12 w-12 shrink-0 rounded-lg border border-isis-blue/10 object-cover"
+                            class="h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-lg border border-isis-blue/10 object-cover"
                           />
                         }
-                        <div class="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[12rem]">
+                        <div class="flex min-w-0 flex-1 flex-col gap-1 sm:gap-1.5 sm:min-w-[12rem]">
                           <input
                             [id]="'pcolor-file-' + $index"
                             type="file"
@@ -883,16 +954,18 @@ function mapOrder(r: OrderApiRow): Order {
                           />
                           <label
                             [for]="'pcolor-file-' + $index"
-                            class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-isis-blue/30 bg-isis-light/40 px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-isis-blue shadow-sm transition-colors hover:border-isis-blue/50 hover:bg-isis-light/70"
+                            class="inline-flex w-full cursor-pointer items-center justify-center gap-1 sm:gap-2 rounded-xl border-2 border-dashed border-isis-blue/30 bg-isis-light/40 px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-bold uppercase tracking-wide text-isis-blue shadow-sm transition-colors hover:border-isis-blue/50 hover:bg-isis-light/70"
                           >
-                            <mat-icon class="!h-8 !w-8 shrink-0 !text-[28px] leading-none">add_photo_alternate</mat-icon>
+                            <mat-icon class="!h-6 !w-6 sm:!h-8 sm:!w-8 shrink-0 !text-[24px] sm:!text-[28px] leading-none">add_photo_alternate</mat-icon>
                             @if (row.imageUrl) {
-                              Alterar imagem da cor
+                              <span class="hidden sm:inline">Alterar imagem da cor</span>
+                              <span class="sm:hidden">Alterar imagem</span>
                             } @else {
-                              Imagem da cor (opcional)
+                              <span class="hidden sm:inline">Imagem da cor (opcional)</span>
+                              <span class="sm:hidden">Imagem (opcional)</span>
                             }
                           </label>
-                          <span class="text-[11px] font-medium text-isis-dark/45">JPG, PNG ou WebP · máx. 25 MB</span>
+                          <span class="text-[10px] sm:text-[11px] font-medium text-isis-dark/45">JPG, PNG, WebP</span>
                         </div>
                         @if (productColorRowUploading() === $index) {
                           <span class="shrink-0 text-[11px] font-semibold text-isis-dark/50">A enviar…</span>
@@ -1022,6 +1095,19 @@ export class Dashboard {
       return '—';
     }
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+  }
+
+  orderStatusBadgeClass(status: Order['status']): string {
+    switch (status) {
+      case 'Pendente':
+        return 'border-amber-200 bg-amber-50 text-amber-800';
+      case 'Produção':
+        return 'border-isis-blue/25 bg-isis-blue/10 text-isis-blue';
+      case 'Concluído':
+        return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+      default:
+        return 'border-isis-blue/10 bg-isis-light text-isis-dark/60';
+    }
   }
 
   /** Resolve `/api/public/media/...` para `<img src>`. */
