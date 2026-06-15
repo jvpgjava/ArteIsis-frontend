@@ -143,7 +143,7 @@ export class Register {
       error: (err) => {
         const msg =
           err?.status === 409
-            ? 'Este e-mail já está registado.'
+            ? 'Este e-mail já está registrado.'
             : 'Não foi possível concluir o registo. Tente novamente.';
         this.error.set(msg);
         this.loading.set(false);
